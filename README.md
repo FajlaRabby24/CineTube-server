@@ -1,4 +1,4 @@
-# server
+# CineTube -> server
 
 To install dependencies:
 

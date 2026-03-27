@@ -1,0 +1,61 @@
+model Review {
+  id         String       @id @default(cuid())
+  userId     String
+  mediaId    String
+  rating     Int // 1–10 scale
+  title      String?
+  content    String
+  hasSpoiler Boolean      @default(false)
+  status     ReviewStatus @default(PENDING)
+
+  // Admin moderation
+  publishedAt    DateTime?
+  rejectedReason String?
+  moderatedBy    String? // admin userId (loose ref, logged in AuditLog)
+
+  // Denormalized counters
+  likesCount    Int @default(0)
+  commentsCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  // user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media    Media        @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  likes    ReviewLike[]
+  comments Comment[]
+  tags     ReviewTag[]
+  reports  Report[]
+
+  @@index([userId])
+  @@index([mediaId])
+  @@index([status])
+  @@index([rating])
+  @@map("review")
+}
+
+model ReviewTag {
+  id       String @id @default(cuid())
+  reviewId String
+  tagId    String
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, tagId])
+  @@map("review_tag")
+}
+
+model ReviewLike {
+  id        String   @id @default(cuid())
+  userId    String
+  reviewId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reviewId])
+  @@map("review_like")
+}

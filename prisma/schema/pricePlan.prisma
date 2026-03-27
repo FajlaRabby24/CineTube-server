@@ -1,0 +1,16 @@
+model PricingPlan {
+  id            String           @id @default(cuid())
+  name          String // "Free", "Monthly", "Yearly"
+  plan          SubscriptionPlan @unique
+  price         Float // 0.00 for FREE plan
+  currency      String           @default("usd")
+  features      String[] // list of feature bullets shown on pricing card
+  isActive      Boolean          @default(true)
+  isPopular     Boolean          @default(false) // highlights "Most Popular" badge
+  stripePriceId String? // null for FREE plan
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("pricing_plan")
+}

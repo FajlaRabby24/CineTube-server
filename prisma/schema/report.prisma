@@ -1,0 +1,27 @@
+model Report {
+  id          String           @id @default(cuid())
+  userId      String // user who filed the report
+  targetType  ReportTargetType // REVIEW or COMMENT
+  targetId    String // reviewId or commentId (polymorphic)
+  reason      ReportReason
+  description String? // optional extra detail from reporter
+  status      ReportStatus     @default(PENDING)
+
+  // Admin resolution
+  resolvedBy String? // admin userId
+  resolvedAt DateTime?
+  resolution String? // admin note on how it was resolved
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review  Review?  @relation(fields: [targetId], references: [id], onDelete: Cascade, map: "report_review_fk")
+  comment Comment? @relation(fields: [targetId], references: [id], onDelete: Cascade, map: "report_comment_fk")
+
+  @@index([targetType, targetId])
+  @@index([status])
+  @@index([userId])
+  @@map("report")
+}

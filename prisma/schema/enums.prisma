@@ -1,143 +1,143 @@
 enum Role {
-    USER
-    ADMIN
+  USER
+  ADMIN
 }
 
 enum MediaType {
-    MOVIE
-    SERIES
+  MOVIE
+  SERIES
 }
 
 enum ContentStatus {
-    DRAFT
-    PUBLISHED
-    UNPUBLISHED
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
 }
 
 enum ReviewStatus {
-    PENDING // awaiting admin approval
-    APPROVED
-    REJECTED
+  PENDING // awaiting admin approval
+  APPROVED
+  REJECTED
 }
 
 enum PricingType {
-    FREE
-    PREMIUM
+  FREE
+  PREMIUM
 }
 
 // FREE added for homepage pricing card (free tier)
 enum SubscriptionPlan {
-    FREE
-    MONTHLY
-    YEARLY
+  FREE
+  MONTHLY
+  YEARLY
 }
 
 enum SubscriptionStatus {
-    ACTIVE
-    CANCELLED
-    EXPIRED
-    PAST_DUE
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
 }
 
 enum PaymentStatus {
-    PENDING
-    SUCCEEDED
-    FAILED
-    REFUNDED
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
 }
 
 enum AgeRating {
-    G // General audiences
-    PG // Parental guidance
-    PG_13 // Parents strongly cautioned
-    R // Restricted
-    NC_17 // Adults only
-    TV_Y // All children
-    TV_14 // Parents strongly cautioned (TV)
-    TV_MA // Mature audiences only
+  G // General audiences
+  PG // Parental guidance
+  PG_13 // Parents strongly cautioned
+  R // Restricted
+  NC_17 // Adults only
+  TV_Y // All children
+  TV_14 // Parents strongly cautioned (TV)
+  TV_MA // Mature audiences only
 }
 
 enum Genre {
-    ACTION
-    ADVENTURE
-    ANIMATION
-    COMEDY
-    CRIME
-    DOCUMENTARY
-    DRAMA
-    FANTASY
-    HORROR
-    MYSTERY
-    ROMANCE
-    SCI_FI
-    THRILLER
-    WESTERN
-    FAMILY
-    MUSICAL
-    BIOGRAPHY
-    SPORT
-    WAR
-    HISTORY
+  ACTION
+  ADVENTURE
+  ANIMATION
+  COMEDY
+  CRIME
+  DOCUMENTARY
+  DRAMA
+  FANTASY
+  HORROR
+  MYSTERY
+  ROMANCE
+  SCI_FI
+  THRILLER
+  WESTERN
+  FAMILY
+  MUSICAL
+  BIOGRAPHY
+  SPORT
+  WAR
+  HISTORY
 }
 
 enum StreamingPlatform {
-    NETFLIX
-    DISNEY_PLUS
-    AMAZON_PRIME
-    HBO_MAX
-    APPLE_TV
-    HULU
-    YOUTUBE
-    PEACOCK
-    PARAMOUNT_PLUS
-    OTHER
+  NETFLIX
+  DISNEY_PLUS
+  AMAZON_PRIME
+  HBO_MAX
+  APPLE_TV
+  HULU
+  YOUTUBE
+  PEACOCK
+  PARAMOUNT_PLUS
+  OTHER
 }
 
 enum NotificationType {
-    REVIEW_APPROVED
-    REVIEW_REJECTED
-    REVIEW_LIKED
-    COMMENT_RECEIVED
-    COMMENT_REPLIED
-    SUBSCRIPTION_ACTIVATED
-    SUBSCRIPTION_EXPIRED
-    PAYMENT_SUCCEEDED
-    PAYMENT_FAILED
-    REPORT_RESOLVED
+  REVIEW_APPROVED
+  REVIEW_REJECTED
+  REVIEW_LIKED
+  COMMENT_RECEIVED
+  COMMENT_REPLIED
+  SUBSCRIPTION_ACTIVATED
+  SUBSCRIPTION_EXPIRED
+  PAYMENT_SUCCEEDED
+  PAYMENT_FAILED
+  REPORT_RESOLVED
 }
 
 enum ReportReason {
-    SPAM
-    SPOILER_WITHOUT_WARNING
-    HATE_SPEECH
-    INAPPROPRIATE_CONTENT
-    MISINFORMATION
-    OTHER
+  SPAM
+  SPOILER_WITHOUT_WARNING
+  HATE_SPEECH
+  INAPPROPRIATE_CONTENT
+  MISINFORMATION
+  OTHER
 }
 
 enum ReportStatus {
-    PENDING
-    REVIEWED
-    RESOLVED
-    DISMISSED
+  PENDING
+  REVIEWED
+  RESOLVED
+  DISMISSED
 }
 
 enum ReportTargetType {
-    REVIEW
-    COMMENT
+  REVIEW
+  COMMENT
 }
 
 enum AuditAction {
-    REVIEW_APPROVED
-    REVIEW_REJECTED
-    REVIEW_DELETED
-    COMMENT_DELETED
-    USER_BANNED
-    USER_UNBANNED
-    MEDIA_CREATED
-    MEDIA_UPDATED
-    MEDIA_DELETED
-    REPORT_RESOLVED
-    REPORT_DISMISSED
-    SUBSCRIPTION_REFUNDED
+  REVIEW_APPROVED
+  REVIEW_REJECTED
+  REVIEW_DELETED
+  COMMENT_DELETED
+  USER_BANNED
+  USER_UNBANNED
+  MEDIA_CREATED
+  MEDIA_UPDATED
+  MEDIA_DELETED
+  REPORT_RESOLVED
+  REPORT_DISMISSED
+  SUBSCRIPTION_REFUNDED
 }

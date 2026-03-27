@@ -1,0 +1,21 @@
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express, { Application } from "express";
+import helmet from "helmet";
+
+const app: Application = express();
+
+app.use(helmet());
+// Enable URL-encoded form data parsing
+app.use(express.urlencoded({ extended: true }));
+
+// Middleware to parse JSON bodies
+app.use(express.json());
+app.use(cookieParser());
+app.use(cors());
+
+app.get("/", (req, res) => {
+  res.send("Hello, World!");
+});
+
+export default app;

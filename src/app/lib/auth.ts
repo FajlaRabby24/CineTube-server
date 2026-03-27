@@ -4,18 +4,14 @@ import { Role } from "../../generated/prisma/enums";
 import { prisma } from "./prisma";
 // If your Prisma file is located elsewhere, you can change the path
 
-/**
- *  * role          Role      @default(USER)
- * bio           String?
- * isActive      Boolean   @default(true)
- * isBanned      Boolean   @default(false)
- * bannedReason  String?
- * bannedAt      DateTime?
- */
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql", // or "mysql", "postgresql", ...etc
   }),
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: true,
+  },
   user: {
     additionalFields: {
       role: {

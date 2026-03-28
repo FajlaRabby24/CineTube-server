@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import status from "http-status";
 import z from "zod";
 import { envVars } from "../config/env";
@@ -6,14 +6,18 @@ import AppError from "../errorhandlers/AppError";
 import { handleZodError } from "../errorhandlers/handleZodError";
 import { IErrorResponse, IErrorSources } from "../interfaces/error.interfaces";
 
-export const globalErrorHandler = async (
+export const globalErrorHandler = (
   err: any,
   req: Request,
   res: Response,
-  next: NextFunction,
 ) => {
   if (envVars.NODE_ENV === "development") {
     console.log("Error from Global Error Handler", err);
+  }
+
+  if (typeof res.status !== "function") {
+    console.error("Invalid response object in error handler:", err);
+    return;
   }
 
   let errorSources: IErrorSources[] = [];

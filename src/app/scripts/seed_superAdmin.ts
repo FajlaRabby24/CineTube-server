@@ -16,13 +16,19 @@ const seedSuperAdmin = async () => {
       return;
     }
 
+    const name = envVars.NAME;
+    const email = envVars.EMAIL;
+    const password = envVars.PASSWORD;
+
+    if (!name || !email || !password) {
+      throw new Error("NAME, EMAIL, and PASSWORD environment variables are required for seeding super admin");
+    }
+
     const superAdminData = await auth.api.signUpEmail({
       body: {
-        name: envVars.SUPER_ADMIN_NAME,
-        email: envVars.SUPER_ADMIN_EMAIL,
-        password: envVars.SUPER_ADMIN_PASSWORD,
-        role: Role.SUPER_ADMIN,
-        needPasswordChange: false,
+        name,
+        email,
+        password,
       },
     });
 
@@ -32,6 +38,7 @@ const seedSuperAdmin = async () => {
           id: superAdminData.user.id,
         },
         data: {
+          role: Role.SUPER_ADMIN,
           emailVerified: true,
         },
       });
@@ -46,11 +53,6 @@ const seedSuperAdmin = async () => {
     console.log("Super admin seeded successfully.");
   } catch (error) {
     console.error(`Error seeding super admin: ${error}`);
-    await prisma.user.delete({
-      where: {
-        email: envVars.SUPER_ADMIN_EMAIL,
-      },
-    });
   }
 };
 

@@ -4,6 +4,8 @@ import { envVars } from "../config/env";
 import { cookieUtils } from "./cookie";
 import { jwtUtils } from "./jwt";
 
+const isProduction = envVars.NODE_ENV === "production";
+
 const getAccessToken = (payload: JwtPayload) => {
   const accessToken = jwtUtils.createToken(
     payload,
@@ -27,8 +29,8 @@ const getRefreshToken = (payload: JwtPayload) => {
 const setAccessTokenCookie = (res: Response, token: string) => {
   cookieUtils.setCookie(res, "accessToken", token, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: isProduction,
+    sameSite: isProduction ? "strict" : "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 1000,
   });
@@ -37,8 +39,8 @@ const setAccessTokenCookie = (res: Response, token: string) => {
 const setRefreshTokenCookie = (res: Response, token: string) => {
   cookieUtils.setCookie(res, "refreshToken", token, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: isProduction,
+    sameSite: isProduction ? "strict" : "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7 * 1000,
   });
@@ -47,10 +49,9 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
 const setBetterAuthSessionCookie = (res: Response, token: string) => {
   cookieUtils.setCookie(res, "better-auth.session_token", token, {
     httpOnly: true,
-    secure: true,
+    secure: isProduction,
     path: "/",
-    sameSite: "none",
-    // 1 day
+    sameSite: isProduction ? "strict" : "lax",
     maxAge: 60 * 60 * 24 * 1000,
   });
 };

@@ -4,31 +4,32 @@ import { bearer, emailOTP } from "better-auth/plugins";
 import { Role } from "../../generated/prisma/enums";
 import { envVars } from "../config/env";
 import { prisma } from "./prisma";
-// If your Prisma file is located elsewhere, you can change the path
+
+const isProduction = envVars.NODE_ENV === "production";
 
 export const auth = betterAuth({
   baseURL: envVars.BETTER_AUTH_URL,
   secret: envVars.BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, {
-    provider: "postgresql", // or "mysql", "postgresql", ...etc
+    provider: "postgresql",
   }),
   trustedOrigins: [envVars.FRONTEND_URL, envVars.BETTER_AUTH_URL],
   advanced: {
     disableCSRFCheck: true,
-    useSecureCookies: false,
+    useSecureCookies: isProduction,
     cookies: {
       state: {
         attributes: {
-          sameSite: "none",
-          secure: true,
+          sameSite: isProduction ? "strict" : "lax",
+          secure: isProduction,
           httpOnly: true,
           path: "/",
         },
       },
       sessionToken: {
         attributes: {
-          sameSite: "none",
-          secure: true,
+          sameSite: isProduction ? "strict" : "lax",
+          secure: isProduction,
           httpOnly: true,
           path: "/",
         },
@@ -45,11 +46,11 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
   },
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
     },
   },
   user: {
@@ -93,7 +94,6 @@ export const auth = betterAuth({
     emailOTP({
       overrideDefaultEmailVerification: true,
       async sendVerificationOTP({ email, otp, type }) {
-        // email verification
         if (type === "email-verification") {
           const user = await prisma.user.findUnique({
             where: {
@@ -108,18 +108,15 @@ export const auth = betterAuth({
 
           if (user?.role === Role.ADMIN || user?.role === Role.SUPER_ADMIN) {
             console.log(
-              `User wich email ${email} is a super admin. Skipping sending verification OTP.`,
+              `User with email ${email} is an admin. Skipping sending verification OTP.`,
             );
             return;
           }
 
           if (user && !user.emailVerified) {
-            // TODO: Send email
             console.log(`Sending email to ${email} with OTP ${otp}`);
           }
-        }
-        // forget password
-        else if (type === "forget-password") {
+        } else if (type === "forget-password") {
           const user = await prisma.user.findUnique({
             where: {
               email,
@@ -131,13 +128,10 @@ export const auth = betterAuth({
             return;
           }
 
-          if (user) {
-            // TODO: Send email
-            console.log(`Sending email to ${email} with OTP ${otp}`);
-          }
+          console.log(`Sending email to ${email} with OTP ${otp}`);
         }
       },
-      expiresIn: 2 * 60, // 2 minutes
+      expiresIn: 2 * 60,
       otpLength: 6,
     }),
   ],

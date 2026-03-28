@@ -1,0 +1,325 @@
+import status from "http-status";
+import { AuditAction } from "../../../generated/prisma/enums";
+import AppError from "../../errorhandlers/AppError";
+import { prisma } from "../../lib/prisma";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { slugify } from "../../utils/slugify";
+import { ICreateMediaPayload, IUpdateMediaPayload } from "./media.type";
+
+const createMediaIntoDB = async (
+  adminId: string,
+  payload: ICreateMediaPayload,
+) => {
+  const { genres, platforms, castMembers, directors, tags, ...mediaData } =
+    payload;
+
+  const slug = slugify(mediaData.title);
+
+  const existingMedia = await prisma.media.findUnique({
+    where: { slug },
+  });
+
+  const finalSlug = existingMedia
+    ? `${slug}-${Math.floor(Math.random() * 1000)}`
+    : slug;
+
+  const filteredMediaData = Object.fromEntries(
+    Object.entries(mediaData).filter(([_, v]) => v !== undefined),
+  );
+
+  const result = await prisma.$transaction(async (tx) => {
+    const media = await tx.media.create({
+      data: {
+        ...(filteredMediaData as any),
+        slug: finalSlug,
+        genres: {
+          create: genres.map((genre: any) => ({ genre })),
+        },
+        ...(platforms && {
+          platforms: {
+            create: platforms.map((p: any) => ({
+              platform: p.platform,
+              streamUrl: p.streamUrl,
+            })),
+          },
+        }),
+        ...(castMembers && {
+          castMembers: {
+            create: castMembers.map((c: any, index: number) => ({
+              ...c,
+              orderIndex: index,
+            })),
+          },
+        }),
+        ...(directors && {
+          directors: {
+            create: directors.map((d: any) => ({
+              ...d,
+            })),
+          },
+        }),
+      },
+    });
+
+    if (tags) {
+      for (const tagName of tags) {
+        const tag = await tx.tag.upsert({
+          where: { name: tagName },
+          update: {},
+          create: { name: tagName, slug: slugify(tagName) },
+        });
+
+        await tx.mediaTag.create({
+          data: {
+            mediaId: media.id,
+            tagId: tag.id,
+          },
+        });
+      }
+    }
+
+    await tx.auditLog.create({
+      data: {
+        adminId,
+        action: AuditAction.MEDIA_CREATED,
+        targetId: media.id,
+        details: `Created media: ${media.title}`,
+      },
+    });
+
+    return media;
+  });
+
+  return result;
+};
+
+const getAllMediaFromDB = async (query: Record<string, any>) => {
+  const mediaQuery = new QueryBuilder(prisma.media, query, {
+    searchableFields: ["title", "synopsis"],
+    filterableFields: [
+      "type",
+      "pricingType",
+      "status",
+      "releaseYear",
+      "isFeatured",
+      "isTrending",
+      "isEditorsPick",
+    ],
+  })
+    .search()
+    .filter()
+    .sort()
+    .paginate()
+    .include({
+      genres: true,
+      platforms: true,
+      castMembers: true,
+      directors: true,
+      tags: {
+        include: {
+          tag: true,
+        },
+      },
+    });
+
+  return await mediaQuery.execute();
+};
+
+const getMediaBySlugFromDB = async (slug: string) => {
+  const result = await prisma.media.findUnique({
+    where: { slug },
+    include: {
+      genres: true,
+      platforms: true,
+      castMembers: true,
+      directors: true,
+      tags: {
+        include: {
+          tag: true,
+        },
+      },
+      reviews: {
+        where: { status: "APPROVED" },
+        include: {
+          user: {
+            select: { name: true, image: true },
+          },
+        },
+        take: 10,
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+
+  if (!result) {
+    throw new AppError(status.NOT_FOUND, "Media not found");
+  }
+
+  return result;
+};
+
+const updateMediaInDB = async (
+  adminId: string,
+  id: string,
+  payload: IUpdateMediaPayload,
+) => {
+  const { genres, platforms, castMembers, directors, tags, ...mediaData } =
+    payload;
+
+  const isMediaExists = await prisma.media.findUnique({
+    where: { id },
+  });
+
+  if (!isMediaExists) {
+    throw new AppError(status.NOT_FOUND, "Media not found");
+  }
+
+  // Filter out undefined values to satisfy exactOptionalPropertyTypes
+  const filteredMediaData = Object.fromEntries(
+    Object.entries(mediaData).filter(([_, v]) => v !== undefined),
+  );
+
+  const result = await prisma.$transaction(async (tx) => {
+    // 1. Update basic fields
+    const updatedMedia = await tx.media.update({
+      where: { id },
+      data: {
+        ...filteredMediaData,
+        updatedAt: new Date(),
+      },
+    });
+
+    // 2. Update relations if provided
+    if (genres) {
+      await tx.mediaGenre.deleteMany({ where: { mediaId: id } });
+      await tx.mediaGenre.createMany({
+        data: genres.map((genre: any) => ({ mediaId: id, genre })),
+      });
+    }
+
+    if (platforms) {
+      await tx.mediaPlatform.deleteMany({ where: { mediaId: id } });
+      await tx.mediaPlatform.createMany({
+        data: platforms.map((p: any) => ({
+          mediaId: id,
+          platform: p.platform,
+          streamUrl: p.streamUrl,
+        })),
+      });
+    }
+
+    if (castMembers) {
+      await tx.mediaCast.deleteMany({ where: { mediaId: id } });
+      await tx.mediaCast.createMany({
+        data: castMembers.map((c: any, index: number) => ({
+          mediaId: id,
+          ...c,
+          orderIndex: index,
+        })),
+      });
+    }
+
+    if (directors) {
+      await tx.mediaDirector.deleteMany({ where: { mediaId: id } });
+      await tx.mediaDirector.createMany({
+        data: directors.map((d: any) => ({
+          mediaId: id,
+          ...d,
+        })),
+      });
+    }
+
+    if (tags) {
+      await tx.mediaTag.deleteMany({ where: { mediaId: id } });
+      for (const tagName of tags) {
+        const tag = await tx.tag.upsert({
+          where: { name: tagName },
+          update: {},
+          create: { name: tagName, slug: slugify(tagName) },
+        });
+
+        await tx.mediaTag.create({
+          data: {
+            mediaId: id,
+            tagId: tag.id,
+          },
+        });
+      }
+    }
+
+    await tx.auditLog.create({
+      data: {
+        adminId,
+        action: AuditAction.MEDIA_UPDATED,
+        targetId: id,
+        details: `Updated media: ${isMediaExists.title}`,
+      },
+    });
+
+    return updatedMedia;
+  });
+
+  return result;
+};
+
+const deleteMediaFromDB = async (adminId: string, id: string) => {
+  const isMediaExists = await prisma.media.findUnique({
+    where: { id },
+  });
+
+  if (!isMediaExists) {
+    throw new AppError(status.NOT_FOUND, "Media not found");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.media.delete({
+      where: { id },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        adminId,
+        action: AuditAction.MEDIA_DELETED,
+        targetId: id,
+        details: `Deleted media: ${isMediaExists.title}`,
+      },
+    });
+  });
+
+  return null;
+};
+
+const getFeaturedMediaFromDB = async () => {
+  return await prisma.media.findMany({
+    where: { isFeatured: true, status: "PUBLISHED" },
+    take: 10,
+    include: { genres: true },
+  });
+};
+
+const getTrendingMediaFromDB = async () => {
+  return await prisma.media.findMany({
+    where: { isTrending: true, status: "PUBLISHED" },
+    take: 10,
+    include: { genres: true },
+  });
+};
+
+const getEditorsPicksFromDB = async () => {
+  return await prisma.media.findMany({
+    where: { isEditorsPick: true, status: "PUBLISHED" },
+    take: 10,
+    include: { genres: true },
+  });
+};
+
+export const MediaService = {
+  createMediaIntoDB,
+  getAllMediaFromDB,
+  getMediaBySlugFromDB,
+  updateMediaInDB,
+  deleteMediaFromDB,
+  getFeaturedMediaFromDB,
+  getTrendingMediaFromDB,
+  getEditorsPicksFromDB,
+};

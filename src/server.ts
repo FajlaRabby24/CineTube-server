@@ -1,13 +1,25 @@
 import app from "./app";
 
+const PORT = process.env.PORT || 5000;
+
 const bootstrap = () => {
-  try {
-    app.listen(5000, () => {
-      console.log(`🚀 Server is running on port ${5000}`);
+  const server = app.listen(Number(PORT), () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+
+  process.on("unhandledRejection", (err: Error) => {
+    console.error("Unhandled Rejection:", err);
+    server.close(() => {
+      process.exit(1);
     });
-  } catch (error) {
-    console.log("Error starting server:", error);
-  }
+  });
+
+  process.on("uncaughtException", (err: Error) => {
+    console.error("Uncaught Exception:", err);
+    server.close(() => {
+      process.exit(1);
+    });
+  });
 };
 
 bootstrap();

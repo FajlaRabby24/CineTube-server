@@ -30,8 +30,6 @@ const createAdminIntoDB = async (payload: IAdminCreatePayload) => {
       name,
       email,
       password,
-      // @ts-ignore
-      role: Role.ADMIN,
     },
   });
 
@@ -45,7 +43,10 @@ const createAdminIntoDB = async (payload: IAdminCreatePayload) => {
   const result = await prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: userData.user.id },
-      data: { emailVerified: true },
+      data: { 
+        role: Role.ADMIN,
+        emailVerified: true,
+      },
     });
 
     const admin = await tx.admin.create({

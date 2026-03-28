@@ -14,4 +14,42 @@ router.post(
   AdminController.createAdmin,
 );
 
+router.get(
+  "/stats",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  AdminController.getDashboardStats,
+);
+
+router.get(
+  "/users",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  AdminController.getAllUsers,
+);
+
+router.patch(
+  "/users/:id/ban",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  validateRequest(AdminValidation.banUserSchema),
+  AdminController.banUnbanUser,
+);
+
+router.get(
+  "/audit-log",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  AdminController.getAuditLogs,
+);
+
+router.get(
+  "/payments",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  AdminController.getPaymentAnalytics,
+);
+
+router.post(
+  "/payments/:id/refund",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  validateRequest(AdminValidation.refundPaymentSchema),
+  AdminController.refundPayment,
+);
+
 export const AdminRoutes = router;

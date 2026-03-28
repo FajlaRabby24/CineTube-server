@@ -114,6 +114,12 @@ export const checkAuth =
         );
       }
 
+      req.user = {
+        userId: verifiedToken.data!.userId,
+        role: verifiedToken.data!.role,
+        email: verifiedToken.data!.email,
+      };
+
       next();
     } catch (error) {
       next(error);

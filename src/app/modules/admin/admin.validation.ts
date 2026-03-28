@@ -8,6 +8,19 @@ const createAdminSchema = z.object({
   address: z.string().optional(),
 });
 
+const banUserSchema = z.object({
+  isBanned: z.boolean(),
+  bannedReason: z.string().optional(),
+});
+
+const refundPaymentSchema = z.object({
+  refundReason: z
+    .string()
+    .min(5, "Refund reason must be at least 5 characters long"),
+});
+
 export const AdminValidation = {
   createAdminSchema,
+  banUserSchema,
+  refundPaymentSchema,
 };

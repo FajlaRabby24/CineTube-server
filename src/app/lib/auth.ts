@@ -81,6 +81,11 @@ export const auth = betterAuth({
         type: "date",
         required: false,
       },
+      needPasswordChange: {
+        type: "boolean",
+        defaultValue: false,
+        required: false,
+      },
     },
   },
   plugins: [
@@ -101,7 +106,7 @@ export const auth = betterAuth({
             return;
           }
 
-          if (user?.role === Role.ADMIN) {
+          if (user?.role === Role.ADMIN || user?.role === Role.SUPER_ADMIN) {
             console.log(
               `User wich email ${email} is a super admin. Skipping sending verification OTP.`,
             );

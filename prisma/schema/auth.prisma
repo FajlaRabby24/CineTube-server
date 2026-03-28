@@ -1,17 +1,19 @@
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  role          Role      @default(USER)
-  bio           String?
-  isActive      Boolean?  @default(true)
-  isBanned      Boolean?  @default(false)
-  bannedReason  String?
-  bannedAt      DateTime?
+  id                 String    @id
+  name               String
+  email              String
+  emailVerified      Boolean   @default(false)
+  image              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  role               Role      @default(USER)
+  bio                String?
+  isActive           Boolean?  @default(true)
+  isBanned           Boolean?  @default(false)
+  bannedReason       String?
+  phoneNumber        String?
+  bannedAt           DateTime?
+  needPasswordChange Boolean   @default(false)
 
   sessions      Session[]
   accounts      Account[]
@@ -22,6 +24,7 @@ model User {
   subscription  Subscription?
   payments      Payment[]
   notifications Notification[]
+  admin         Admin?
 
   @@unique([email])
   @@map("user")

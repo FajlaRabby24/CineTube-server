@@ -1,6 +1,7 @@
 {
   "name": "server",
   "module": "index.ts",
+  "description": "CineTube server",
   "type": "module",
   "private": true,
   "devDependencies": {
@@ -31,7 +32,7 @@
     "push": "prisma db push",
     "pull": "prisma db pull",
     "format": "prisma format",
-    "seed:superadmin": "tsx  ./src/app/scripts/seedSuperAdmin.ts",
+    "seed:admin": "tsx ./src/app/scripts/seed_superAdmin.ts",
     "stripe:webhook": "stripe listen --forward-to localhost:5000/webhook",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

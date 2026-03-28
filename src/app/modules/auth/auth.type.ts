@@ -18,3 +18,8 @@ export interface IUpdatePayload {
   bio?: string;
   image?: string;
 }
+
+export interface IChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}

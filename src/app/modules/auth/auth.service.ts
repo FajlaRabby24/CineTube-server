@@ -1,9 +1,15 @@
 import { Request } from "express";
+import status from "http-status";
 import AppError from "../../errorhandlers/AppError";
+import { IRequestUser } from "../../interfaces/requestUser.interface";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { tokenUtils } from "../../utils/token";
-import { ILoginPayload, IRegisterPayload } from "./auth.type";
+import {
+  IChangePasswordPayload,
+  ILoginPayload,
+  IRegisterPayload,
+} from "./auth.type";
 
 const register = async (payload: IRegisterPayload) => {
   const { name, email, password, bio, image } = payload;
@@ -137,9 +143,191 @@ const logoutAllSession = async (userId: string, token: string) => {
   return true;
 };
 
+const forgotPassword = async (email: string) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+    select: {
+      emailVerified: true,
+      isBanned: true,
+      isActive: true,
+    },
+  });
+
+  if (!isUserExists) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  if (!isUserExists.emailVerified) {
+    throw new AppError(status.BAD_REQUEST, "Email not verified");
+  }
+
+  if (isUserExists.isBanned || !isUserExists.isActive) {
+    throw new AppError(status.BAD_REQUEST, "User is banned or not active");
+  }
+
+  await auth.api.requestPasswordResetEmailOTP({
+    body: {
+      email,
+    },
+  });
+};
+
+const verifyEmail = async (email: string, otp: string) => {
+  const result = await auth.api.verifyEmailOTP({
+    body: {
+      email,
+      otp,
+    },
+  });
+
+  if (result.status && !result.user.emailVerified) {
+    await prisma.user.update({
+      where: {
+        email,
+      },
+      data: {
+        emailVerified: true,
+      },
+    });
+  }
+};
+
+const resetPassword = async (
+  email: string,
+  otp: string,
+  newPassword: string,
+) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+    select: {
+      id: true,
+      emailVerified: true,
+      isActive: true,
+      isBanned: true,
+    },
+  });
+
+  if (!isUserExists) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  if (!isUserExists.emailVerified) {
+    throw new AppError(status.BAD_REQUEST, "Email not verified");
+  }
+
+  if (isUserExists.isBanned || !isUserExists.isActive) {
+    throw new AppError(status.BAD_REQUEST, "User is banned or not active");
+  }
+
+  await auth.api.resetPasswordEmailOTP({
+    body: {
+      email,
+      otp,
+      password: newPassword,
+    },
+  });
+
+  await prisma.session.deleteMany({
+    where: {
+      userId: isUserExists.id,
+    },
+  });
+};
+
+const changePassword = async (
+  payload: IChangePasswordPayload,
+  sessionToken: string,
+) => {
+  const session = await auth.api.getSession({
+    headers: new Headers({
+      Authorization: `Bearer ${sessionToken}`,
+    }),
+  });
+
+  if (!session) {
+    throw new AppError(status.UNAUTHORIZED, "Invalid session token");
+  }
+
+  const { currentPassword, newPassword } = payload;
+
+  const result = await auth.api.changePassword({
+    body: {
+      currentPassword,
+      newPassword,
+      revokeOtherSessions: true, // Revoke all other sessions except the current one
+    },
+    headers: new Headers({
+      Authorization: `Bearer ${sessionToken}`,
+    }),
+  });
+
+  const tokenInfo = {
+    userId: session.user.isBanned,
+    role: session.user.role,
+    name: session.user.name,
+    email: session.user.email,
+    image: session.user.image,
+    isBanned: session.user.isBanned,
+    isActive: session.user.isActive,
+  };
+
+  const accessToken = tokenUtils.getAccessToken(tokenInfo);
+  const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
+
+  return {
+    ...result,
+    accessToken,
+    refreshToken,
+  };
+};
+
+const getMe = async (user: IRequestUser) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      id: user.userId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+    },
+  });
+
+  if (!isUserExists) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  return isUserExists;
+};
+
+// TODO: profile update service
+const profileUpdate = async () => {};
+
+const getSession = async (sessionToken: string) => {
+  const session = await auth.api.getSession({
+    headers: {
+      Cookie: `better-auth.session_token=${sessionToken}`,
+    },
+  });
+
+  return session;
+};
+
 export const authService = {
   register,
   login,
   logoutSession,
   logoutAllSession,
+  forgotPassword,
+  verifyEmail,
+  resetPassword,
+  changePassword,
+  getMe,
+  getSession,
+  profileUpdate,
 };

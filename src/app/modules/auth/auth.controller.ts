@@ -24,6 +24,22 @@ const register = async (req: Request, res: Response) => {
   );
 };
 
+const login = async (req: Request, res: Response) => {
+  const payload = req.body;
+  const result = await authService.login(req, payload);
+  const { accessToken, refreshToken, token, sessionId } = result;
+
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, token);
+
+  sendResponse(res, status.OK, true, "User logged in successfully", {
+    user: result.user,
+    sessionId,
+  });
+};
+
 export const authController = {
   register,
+  login,
 };

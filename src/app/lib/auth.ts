@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { bearer } from "better-auth/plugins";
 import { Role } from "../../generated/prisma/enums";
 import { prisma } from "./prisma";
 // If your Prisma file is located elsewhere, you can change the path
@@ -43,4 +44,5 @@ export const auth = betterAuth({
       },
     },
   },
+  plugins: [bearer()],
 });

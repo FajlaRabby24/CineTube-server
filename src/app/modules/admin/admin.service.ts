@@ -7,17 +7,16 @@ import {
   ReviewStatus,
   Role,
   SubscriptionPlan,
-  SubscriptionStatus,
 } from "../../../generated/prisma/enums";
 import AppError from "../../errorhandlers/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
-import { IAdminCreatePayload, IBanUnbanUserPayload } from "./admin.type";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { IAdminCreatePayload } from "./admin.type";
 
 const createAdminIntoDB = async (payload: IAdminCreatePayload) => {
   const { name, email, password } = payload;
 
-  // 1. Check if user already exists
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
@@ -26,7 +25,6 @@ const createAdminIntoDB = async (payload: IAdminCreatePayload) => {
     throw new AppError(status.CONFLICT, "User with this email already exists");
   }
 
-  // 2. Create User using better-auth
   const userData = await auth.api.signUpEmail({
     body: {
       name,
@@ -44,9 +42,7 @@ const createAdminIntoDB = async (payload: IAdminCreatePayload) => {
     );
   }
 
-  // 3. Create Admin record and update user status in a transaction
   const result = await prisma.$transaction(async (tx) => {
-    // Mark email as verified for admin created by super admin
     await tx.user.update({
       where: { id: userData.user.id },
       data: { emailVerified: true },
@@ -140,19 +136,26 @@ const getDashboardStats = async () => {
   };
 };
 
-const getAllUsers = async () => {
-  return await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
+const getAllUsers = async (query: Record<string, any>) => {
+  const userQuery = new QueryBuilder(prisma.user, query, {
+    searchableFields: ["name", "email", "phoneNumber"],
+    filterableFields: ["role", "isActive", "isBanned"],
+  })
+    .search()
+    .filter()
+    .sort()
+    .paginate()
+    .include({
       subscription: true,
-    },
-  });
+    });
+
+  return await userQuery.execute();
 };
 
 const banUnbanUser = async (
   adminId: string,
   userId: string,
-  payload: IBanUnbanUserPayload,
+  payload: { isBanned: boolean; bannedReason?: string },
 ) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -166,7 +169,6 @@ const banUnbanUser = async (
     const updatedUser = await tx.user.update({
       where: { id: userId },
       data: {
-        isActive: !payload.isBanned,
         isBanned: payload.isBanned,
         bannedReason: payload.isBanned ? (payload.bannedReason ?? null) : null,
         bannedAt: payload.isBanned ? new Date() : null,
@@ -192,10 +194,16 @@ const banUnbanUser = async (
   return result;
 };
 
-const getAuditLogs = async () => {
-  const auditLogs = await prisma.auditLog.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
+const getAuditLogs = async (query: Record<string, any>) => {
+  const auditQuery = new QueryBuilder(prisma.auditLog, query, {
+    searchableFields: ["details", "targetId"],
+    filterableFields: ["action", "adminId"],
+  })
+    .search()
+    .filter()
+    .sort()
+    .paginate()
+    .include({
       admin: {
         include: {
           user: {
@@ -206,24 +214,30 @@ const getAuditLogs = async () => {
           },
         },
       },
-    },
-  });
+    });
 
-  return auditLogs;
+  return await auditQuery.execute();
 };
 
-const getPaymentAnalytics = async () => {
-  const payments = await prisma.payment.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
+const getPaymentAnalytics = async (query: Record<string, any>) => {
+  const paymentQuery = new QueryBuilder(prisma.payment, query, {
+    searchableFields: ["stripePaymentIntentId", "description"],
+    filterableFields: ["status", "currency", "plan"],
+  })
+    .search()
+    .filter()
+    .sort()
+    .paginate()
+    .include({
       user: {
         select: {
           name: true,
           email: true,
         },
       },
-    },
-  });
+    });
+
+  const result = await paymentQuery.execute();
 
   const stats = await prisma.payment.groupBy({
     by: ["status"],
@@ -231,10 +245,9 @@ const getPaymentAnalytics = async () => {
     _sum: { amount: true },
   });
 
-  return { payments, stats };
+  return { ...result, stats };
 };
 
-// TODO: check after complete payment integration
 const refundPayment = async (
   adminId: string,
   paymentId: string,
@@ -264,12 +277,11 @@ const refundPayment = async (
       },
     });
 
-    // If it was a subscription payment, we might want to cancel/expire the subscription
     if (payment.subscriptionId) {
       await tx.subscription.update({
         where: { id: payment.subscriptionId },
         data: {
-          status: SubscriptionStatus.CANCELLED, // or whatever status fits
+          status: "CANCELLED",
           cancelledAt: new Date(),
         },
       });

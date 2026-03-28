@@ -5,6 +5,6 @@ import { authRoute } from "../modules/auth/auth.route";
 const router = Router();
 
 router.use("/auth", authRoute);
-router.use("/admins", AdminRoutes);
+router.use("/admin", AdminRoutes);
 
 export const indexRoute = router;

@@ -21,7 +21,7 @@ model Review {
   updatedAt DateTime @updatedAt
 
   // Relations
-  // user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   media    Media        @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   likes    ReviewLike[]
   comments Comment[]

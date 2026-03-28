@@ -492,9 +492,9 @@ export class QueryBuilder<
       {};
 
     Object.keys(value).forEach((operator) => {
-      const operatorValue = value[operator];
+      const operatorValue = value[operator] as string | number | (string | number)[];
 
-      const parsedValue: string | number =
+      const parsedValue: string | number | (string | number)[] =
         typeof operatorValue === "string" && !isNaN(Number(operatorValue))
           ? Number(operatorValue)
           : operatorValue;
@@ -517,7 +517,7 @@ export class QueryBuilder<
           if (Array.isArray(operatorValue)) {
             rangeQuery[operator] = operatorValue;
           } else {
-            rangeQuery[operator] = [parsedValue];
+            rangeQuery[operator] = [parsedValue] as (string | number)[];
           }
           break;
         default:

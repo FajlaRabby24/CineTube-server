@@ -23,14 +23,14 @@ const getDashboardStats = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const result = await AdminService.getAllUsers();
+  const result = await AdminService.getAllUsers(req.query);
 
   sendResponse(res, status.OK, true, "Users retrieved successfully", result);
 });
 
 const banUnbanUser = catchAsync(async (req: Request, res: Response) => {
-  const adminId = req?.user?.userId;
   const { id } = req.params;
+  const adminId = (req as any).user.userId;
   const result = await AdminService.banUnbanUser(
     adminId,
     id as string,
@@ -41,13 +41,13 @@ const banUnbanUser = catchAsync(async (req: Request, res: Response) => {
     res,
     status.OK,
     true,
-    `User ${req?.body?.isBanned ? "banned" : "unbanned"} successfully`,
+    `User ${req.body.isBanned ? "banned" : "unbanned"} successfully`,
     result,
   );
 });
 
 const getAuditLogs = catchAsync(async (req: Request, res: Response) => {
-  const result = await AdminService.getAuditLogs();
+  const result = await AdminService.getAuditLogs(req.query);
 
   sendResponse(
     res,
@@ -59,7 +59,7 @@ const getAuditLogs = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getPaymentAnalytics = catchAsync(async (req: Request, res: Response) => {
-  const result = await AdminService.getPaymentAnalytics();
+  const result = await AdminService.getPaymentAnalytics(req.query);
 
   sendResponse(
     res,

@@ -9,6 +9,7 @@ import {
   IChangePasswordPayload,
   ILoginPayload,
   IRegisterPayload,
+  IUpdatePayload,
 } from "./auth.type";
 
 const register = async (payload: IRegisterPayload) => {
@@ -29,7 +30,7 @@ const register = async (payload: IRegisterPayload) => {
   }
 
   const tokenInfo = {
-    userId: data.user.isBanned,
+    userId: data.user.id,
     role: data.user.role,
     name: data.user.name,
     email: data.user.email,
@@ -38,11 +39,22 @@ const register = async (payload: IRegisterPayload) => {
     isActive: data.user.isActive,
   };
 
+
   const accessToken = tokenUtils.getAccessToken(tokenInfo);
   const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
 
+  const user = await prisma.user.findUnique({
+    where: {
+      id: data.user.id,
+    },
+    select: {
+      name: true,
+    },
+  });
+
   return {
-    ...data,
+    token: data.token,
+    user,
     accessToken,
     refreshToken,
   };
@@ -94,7 +106,6 @@ const login = async (req: Request, payload: ILoginPayload) => {
 
   return {
     ...data,
-    sessionId: session?.id, // ✅ frontend এর জন্য
     accessToken,
     refreshToken,
   };
@@ -266,7 +277,7 @@ const changePassword = async (
   });
 
   const tokenInfo = {
-    userId: session.user.isBanned,
+    userId: session.user.id,
     role: session.user.role,
     name: session.user.name,
     email: session.user.email,
@@ -295,6 +306,7 @@ const getMe = async (user: IRequestUser) => {
       name: true,
       email: true,
       image: true,
+      bio: true,
     },
   });
 
@@ -305,8 +317,46 @@ const getMe = async (user: IRequestUser) => {
   return isUserExists;
 };
 
-// TODO: profile update service
-const profileUpdate = async () => {};
+const profileUpdate = async (userId: string, payload: IUpdatePayload) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!isUserExists) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password, ...updateData } = payload;
+
+  const result = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: updateData,
+  });
+
+  const tokenInfo = {
+    userId: result.id,
+    role: result.role,
+    name: result.name,
+    email: result.email,
+    image: result.image,
+    isBanned: result.isBanned as boolean,
+    isActive: result.isActive as boolean,
+  };
+
+  const accessToken = tokenUtils.getAccessToken(tokenInfo);
+  const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
+
+  return {
+    user: result,
+    accessToken,
+    refreshToken,
+  };
+};
 
 const getSession = async (sessionToken: string) => {
   const session = await auth.api.getSession({

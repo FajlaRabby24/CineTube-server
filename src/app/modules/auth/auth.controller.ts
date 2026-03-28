@@ -47,6 +47,10 @@ const login = catchAsync(async (req: Request, res: Response) => {
 const getMe = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as IRequestUser;
 
+  if (!user) {
+    return sendResponse(res, status.UNAUTHORIZED, false, "Unauthorized");
+  }
+
   const result = await authService.getMe(user);
 
   sendResponse(
@@ -55,6 +59,30 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
     true,
     "User profile fetched successfully",
     result,
+  );
+});
+
+const profileUpdate = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as IRequestUser;
+  const payload = req.body;
+
+  if (!user) {
+    return sendResponse(res, status.UNAUTHORIZED, false, "Unauthorized");
+  }
+
+  const result = await authService.profileUpdate(user.userId, payload);
+
+  const { accessToken, refreshToken } = result;
+
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken);
+
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "Profile updated successfully",
+    result.user,
   );
 });
 
@@ -69,7 +97,13 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   tokenUtils.setRefreshTokenCookie(res, refreshToken);
   tokenUtils.setBetterAuthSessionCookie(res, token as string);
 
-  sendResponse(res, status.OK, true, "Password changed successfully", result);
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "Password changed successfully",
+    result.user,
+  );
 });
 
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
@@ -108,32 +142,16 @@ const logoutSession = catchAsync(async (req: Request, res: Response) => {
 });
 
 const logoutAllSession = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.user as IRequestUser;
+  const user = req.user as IRequestUser;
+  if (!user) {
+    return sendResponse(res, status.UNAUTHORIZED, false, "Unauthorized");
+  }
   const token = req.params.token;
   if (!token) throw new Error("Token not found");
-  await authService.logoutAllSession(userId, token as string);
+
+  await authService.logoutAllSession(user.userId, token as string);
 
   sendResponse(res, status.OK, true, "Logged out successfully");
-});
-
-const profileUpdate = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.user as IRequestUser;
-  const payload = req.body;
-
-  const result = await authService.profileUpdate(userId, payload);
-
-  const { accessToken, refreshToken } = result;
-
-  tokenUtils.setAccessTokenCookie(res, accessToken);
-  tokenUtils.setRefreshTokenCookie(res, refreshToken);
-
-  sendResponse(
-    res,
-    status.OK,
-    true,
-    "Profile updated successfully",
-    result.user,
-  );
 });
 
 export const authController = {

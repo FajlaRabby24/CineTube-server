@@ -39,7 +39,6 @@ const register = async (payload: IRegisterPayload) => {
     isActive: data.user.isActive,
   };
 
-
   const accessToken = tokenUtils.getAccessToken(tokenInfo);
   const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
 
@@ -85,7 +84,7 @@ const login = async (req: Request, payload: ILoginPayload) => {
   await prisma.session.updateMany({
     where: { token: data.token },
     data: {
-      ipAddress: req.ip ?? req.socket.remoteAddress,
+      ipAddress: req.ip ?? req.socket.remoteAddress ?? null,
       userAgent: req.headers["user-agent"] ?? "unknown",
     },
   });
@@ -123,15 +122,21 @@ const logoutSession = async (userId: string, sessionId: string) => {
   try {
     await auth.api.signOut({
       headers: new Headers({
-        Authorization: `Bearer ${session.token}`,
+        Authorization: `Bearer ${session.id}`,
       }),
     });
   } catch (_) {}
 
-  await prisma.session.delete({
+  const result = await prisma.session.delete({
     where: { id: sessionId },
+    select: {
+      id: true,
+    },
   });
 
+  if (!result) {
+    throw new AppError(404, "Session not found");
+  }
   return true;
 };
 
@@ -307,6 +312,8 @@ const getMe = async (user: IRequestUser) => {
       email: true,
       image: true,
       bio: true,
+      isActive: true,
+      isBanned: true,
     },
   });
 
@@ -328,8 +335,7 @@ const profileUpdate = async (userId: string, payload: IUpdatePayload) => {
     throw new AppError(status.NOT_FOUND, "User not found");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...updateData } = payload;
+  const { ...updateData } = payload;
 
   const result = await prisma.user.update({
     where: {
@@ -352,7 +358,13 @@ const profileUpdate = async (userId: string, payload: IUpdatePayload) => {
   const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
 
   return {
-    user: result,
+    user: {
+      id: result.id,
+      name: result.name,
+      email: result.email,
+      image: result.image,
+      bio: result.bio,
+    },
     accessToken,
     refreshToken,
   };

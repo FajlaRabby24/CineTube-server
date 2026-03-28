@@ -33,7 +33,6 @@ export const updateProfileSchema = z.object({
     .min(2, "Name must be at least 2 characters long")
     .max(50, "Name must be at most 50 characters long")
     .optional(),
-  email: z.email("Email must be a valid email address").optional(),
   image: z.url("Image must be a valid URL").nullable().optional(),
   bio: z
     .string()

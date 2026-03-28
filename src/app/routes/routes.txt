@@ -1,0 +1,84 @@
+Method  Route                              Description                                      Access
+------------------------------------------------------------------------------------------------------
+
+=== AUTH ===
+POST    /api/v1/auth/register                 নতুন user register                               Public
+POST    /api/v1/auth/login                    Login — sessionId + accessToken + refreshToken   Public
+POST    /api/v1/auth/forgot-password          Password reset email পাঠাও                       Public
+POST    /api/v1/auth/reset-password           Token দিয়ে password reset                        Public
+GET     /api/v1/auth/me                       Current user info আনো                            Auth
+PATCH   /api/v1/auth/me                       Profile update করো                               Auth
+GET     /api/v1/auth/sessions                 সব active sessions (devices) দেখাও              Auth
+DELETE  /api/v1/auth/sessions/:sessionId      Specific device logout (current device ও)        Auth
+DELETE  /api/v1/auth/sessions                 সব device logout — current device বাদে           Auth
+
+=== MEDIA ===
+GET     /api/v1/media                         সব media list — filter/sort/paginate             Public
+GET     /api/v1/media/featured                Featured media আনো                              Public
+GET     /api/v1/media/trending                Trending media আনো                              Public
+GET     /api/v1/media/editors-picks           Editor's pick আনো                               Public
+GET     /api/v1/media/search                  Title/genre/cast/director দিয়ে search            Public
+GET     /api/v1/media/:slug                   একটা media এর details                            Public
+POST    /api/v1/media                         নতুন media তৈরি করো                              Admin
+PATCH   /api/v1/media/:id                     Media update করো                                 Admin
+DELETE  /api/v1/media/:id                     Media delete করো                                 Admin
+
+=== REVIEW ===
+GET     /api/v1/reviews                       সব approved reviews — paginated                  Public
+GET     /api/v1/reviews/pending               Pending reviews list                             Admin
+GET     /api/v1/reviews/:id                   একটা review এর details                           Public
+GET     /api/v1/media/:mediaId/reviews        একটা media এর সব reviews                         Public
+POST    /api/v1/media/:mediaId/reviews        নতুন review submit করো                           Auth
+PATCH   /api/v1/reviews/:id                   নিজের unpublished review edit                    Auth
+DELETE  /api/v1/reviews/:id                   নিজের review delete                              Auth
+PATCH   /api/v1/reviews/:id/approve           Review approve করো                               Admin
+PATCH   /api/v1/reviews/:id/reject            Review reject করো — reason সহ                   Admin
+
+=== LIKE ===
+POST    /api/v1/reviews/:id/like              Review like/unlike toggle                        Auth
+POST    /api/v1/comments/:id/like             Comment like/unlike toggle                       Auth
+
+=== COMMENT ===
+GET     /api/v1/reviews/:reviewId/comments    একটা review এর সব comments + replies            Public
+POST    /api/v1/reviews/:reviewId/comments    নতুন top-level comment করো                       Auth
+POST    /api/v1/comments/:id/reply            Comment এ reply করো — 2 level max               Auth
+PATCH   /api/v1/comments/:id                  নিজের comment edit                               Auth
+DELETE  /api/v1/comments/:id                  Comment delete — own বা admin                    Auth
+
+=== WATCHLIST ===
+GET     /api/v1/watchlist                     নিজের watchlist আনো                              Auth
+POST    /api/v1/watchlist/:mediaId            Watchlist এ add করো                              Auth
+DELETE  /api/v1/watchlist/:mediaId            Watchlist থেকে remove করো                        Auth
+
+=== TAG ===
+GET     /api/v1/tags                          সব tags আনো                                     Public
+POST    /api/v1/tags                          নতুন tag তৈরি করো                                Admin
+DELETE  /api/v1/tags/:id                      Tag delete করো                                   Admin
+
+=== SUBSCRIPTION ===
+GET     /api/v1/subscription                  নিজের subscription info                          Auth
+POST    /api/v1/subscription/checkout         Stripe checkout session তৈরি                     Auth
+POST    /api/v1/subscription/cancel           Subscription cancel করো                          Auth
+POST    /api/v1/webhook/stripe                Stripe webhook handler — raw body                Public
+GET     /api/v1/payments                      নিজের payment history                            Auth
+GET     /api/v1/pricing                       Pricing plans আনো                               Public
+PATCH   /api/v1/pricing/:id                   Pricing plan update করো                          Admin
+
+=== REPORT ===
+POST    /api/v1/reports                       Review/comment report করো                        Auth
+GET     /api/v1/reports                       সব pending reports                               Admin
+PATCH   /api/v1/reports/:id/resolve           Report resolve করো                               Admin
+PATCH   /api/v1/reports/:id/dismiss           Report dismiss করো                               Admin
+
+=== NOTIFICATION ===
+GET     /api/v1/notifications                 নিজের notifications আনো                          Auth
+PATCH   /api/v1/notifications/read-all        সব notification read mark করো                    Auth
+PATCH   /api/v1/notifications/:id/read        একটা notification read করো                       Auth
+
+=== ADMIN ===
+GET     /api/v1/admin/stats                   Dashboard stats — users, media, revenue          Admin
+GET     /api/v1/admin/users                   সব users list                                    Admin
+PATCH   /api/v1/admin/users/:id/ban           User ban/unban করো                               Admin
+GET     /api/v1/admin/audit-log               Admin audit log আনো                              Admin
+GET     /api/v1/admin/payments                সব payment analytics                             Admin
+POST    /api/v1/admin/payments/:id/refund     Payment refund করো                               Admin

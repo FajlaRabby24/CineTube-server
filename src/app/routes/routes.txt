@@ -45,7 +45,7 @@ POST    /api/v1/comments/:id/reply            Comment এ reply করো — 2 
 PATCH   /api/v1/comments/:id                  নিজের comment edit                               Auth
 DELETE  /api/v1/comments/:id                  Comment delete — own বা admin                    Auth
 
-=== WATCHLIST ===
+=== WATCHLIST === ✅
 GET     /api/v1/watchlist                     নিজের watchlist আনো                              Auth
 POST    /api/v1/watchlist/:mediaId            Watchlist এ add করো                              Auth
 DELETE  /api/v1/watchlist/:mediaId            Watchlist থেকে remove করো                        Auth

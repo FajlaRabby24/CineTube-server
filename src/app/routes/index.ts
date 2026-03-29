@@ -4,6 +4,7 @@ import { authRoute } from "../modules/auth/auth.route";
 import { CommentRoutes } from "../modules/comment/comment.route";
 import { MediaRoutes } from "../modules/media/media.route";
 import { ReviewRoutes } from "../modules/review/review.route";
+import { WatchlistRoutes } from "../modules/watchlist/watchlist.route";
 
 const router = Router();
 
@@ -12,5 +13,6 @@ router.use("/admin", AdminRoutes);
 router.use("/media", MediaRoutes);
 router.use("/reviews", ReviewRoutes);
 router.use("/comments", CommentRoutes);
+router.use("/watchlist", WatchlistRoutes);
 
 export const indexRoute = router;

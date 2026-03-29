@@ -2,6 +2,8 @@ import { Router } from "express";
 import { Role } from "../../../generated/prisma/enums";
 import { checkAuth } from "../../middleware/checkAuth";
 import { validateRequest } from "../../middleware/validateRequest";
+import { ReviewController } from "../review/review.controller";
+import { ReviewValidation } from "../review/review.validation";
 import { MediaController } from "./media.controller";
 import { MediaValidation } from "./media.validation";
 
@@ -31,5 +33,16 @@ router.delete(
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   MediaController.deleteMedia,
 );
+
+// Media Reviews - Authenticated
+router.post(
+  "/:mediaId/reviews",
+  checkAuth(),
+  validateRequest(ReviewValidation.createReviewSchema),
+  ReviewController.createReview,
+);
+
+// Media Reviews - Public
+router.get("/:mediaId/reviews", ReviewController.getMediaReviews);
 
 export const MediaRoutes = router;

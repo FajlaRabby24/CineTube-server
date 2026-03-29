@@ -34,11 +34,11 @@ DELETE  /api/v1/reviews/:id                   নিজের review delete     
 PATCH   /api/v1/reviews/:id/approve           Review approve করো                               Admin
 PATCH   /api/v1/reviews/:id/reject            Review reject করো — reason সহ                   Admin
 
-=== LIKE ===
+=== LIKE === ✅
 POST    /api/v1/reviews/:id/like              Review like/unlike toggle                        Auth
 POST    /api/v1/comments/:id/like             Comment like/unlike toggle                       Auth
 
-=== COMMENT ===
+=== COMMENT === ✅
 GET     /api/v1/reviews/:reviewId/comments    একটা review এর সব comments + replies            Public
 POST    /api/v1/reviews/:reviewId/comments    নতুন top-level comment করো                       Auth
 POST    /api/v1/comments/:id/reply            Comment এ reply করো — 2 level max               Auth

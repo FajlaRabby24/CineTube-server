@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { bearer, emailOTP } from "better-auth/plugins";
 import { Role } from "../../generated/prisma/enums";
 import { envVars } from "../config/env";
+import { sendEmail } from "../utils/email";
 import { prisma } from "./prisma";
 
 const isProduction = envVars.NODE_ENV === "production";
@@ -114,7 +115,15 @@ export const auth = betterAuth({
           }
 
           if (user && !user.emailVerified) {
-            console.log(`Sending email to ${email} with OTP ${otp}`);
+            sendEmail({
+              to: email,
+              subject: "Verify your email",
+              templateName: "otp",
+              templateData: {
+                name: user.name,
+                otp,
+              },
+            });
           }
         } else if (type === "forget-password") {
           const user = await prisma.user.findUnique({
@@ -128,7 +137,17 @@ export const auth = betterAuth({
             return;
           }
 
-          console.log(`Sending email to ${email} with OTP ${otp}`);
+          if (user) {
+            sendEmail({
+              to: email,
+              subject: "Password Reset OTP",
+              templateName: "otp",
+              templateData: {
+                name: user.name,
+                otp,
+              },
+            });
+          }
         }
       },
       expiresIn: 2 * 60,

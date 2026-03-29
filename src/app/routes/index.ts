@@ -5,6 +5,7 @@ import { CommentRoutes } from "../modules/comment/comment.route";
 import { MediaRoutes } from "../modules/media/media.route";
 import { PaymentRoutes } from "../modules/payment/payment.route";
 import { PricingRoutes } from "../modules/pricing/pricing.route";
+import { ReportRoutes } from "../modules/report/report.route";
 import { ReviewRoutes } from "../modules/review/review.route";
 import { SubscriptionRoutes } from "../modules/subscription/subscription.route";
 import { TagRoutes } from "../modules/tag/tag.route";
@@ -23,6 +24,7 @@ router.use("/tags", TagRoutes);
 router.use("/subscription", SubscriptionRoutes);
 router.use("/payments", PaymentRoutes);
 router.use("/pricing", PricingRoutes);
+router.use("/reports", ReportRoutes);
 router.use("/webhook", WebhookRoutes);
 
 export const indexRoute = router;

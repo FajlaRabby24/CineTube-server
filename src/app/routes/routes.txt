@@ -55,7 +55,7 @@ GET     /api/v1/tags                          সব tags আনো             
 POST    /api/v1/tags                          নতুন tag তৈরি করো                                Admin
 DELETE  /api/v1/tags/:id                      Tag delete করো                                   Admin
 
-=== SUBSCRIPTION ===
+=== SUBSCRIPTION === ✅
 GET     /api/v1/subscription                  নিজের subscription info                          Auth
 POST    /api/v1/subscription/checkout         Stripe checkout session তৈরি                     Auth
 POST    /api/v1/subscription/cancel           Subscription cancel করো                          Auth
@@ -64,7 +64,7 @@ GET     /api/v1/payments                      নিজের payment history   
 GET     /api/v1/pricing                       Pricing plans আনো                               Public
 PATCH   /api/v1/pricing/:id                   Pricing plan update করো                          Admin
 
-=== REPORT ===
+=== REPORT === ✅
 POST    /api/v1/reports                       Review/comment report করো                        Auth
 GET     /api/v1/reports                       সব pending reports                               Admin
 PATCH   /api/v1/reports/:id/resolve           Report resolve করো                               Admin

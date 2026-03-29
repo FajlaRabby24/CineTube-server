@@ -1,23 +1,30 @@
-import { Request, Response } from "express";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { NextFunction, Request, Response } from "express";
 import status from "http-status";
 import z from "zod";
+import { Prisma } from "../../generated/prisma/client";
 import { envVars } from "../config/env";
 import AppError from "../errorhandlers/AppError";
+
+import {
+  handlePrismaClientKnownRequestError,
+  handlePrismaClientUnknownError,
+  handlePrismaClientValidationError,
+  handlerPrismaClientInitializationError,
+  handlerPrismaClientRustPanicError,
+} from "../errorhandlers/handlePrismaError";
 import { handleZodError } from "../errorhandlers/handleZodError";
 import { IErrorResponse, IErrorSources } from "../interfaces/error.interfaces";
 
-export const globalErrorHandler = (
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const globalErrorHandler = async (
   err: any,
   req: Request,
   res: Response,
+  next: NextFunction,
 ) => {
   if (envVars.NODE_ENV === "development") {
     console.log("Error from Global Error Handler", err);
-  }
-
-  if (typeof res.status !== "function") {
-    console.error("Invalid response object in error handler:", err);
-    return;
   }
 
   let errorSources: IErrorSources[] = [];
@@ -25,7 +32,37 @@ export const globalErrorHandler = (
   let message: string = "Internal Server Error";
   let stack: string | undefined = undefined;
 
-  if (err instanceof z.ZodError) {
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    const simplifiedError = handlePrismaClientKnownRequestError(err);
+    statusCode = simplifiedError.statusCode as number;
+    message = simplifiedError.message;
+    errorSources = [...simplifiedError.errorSources];
+    stack = err.stack;
+  } else if (err instanceof Prisma.PrismaClientUnknownRequestError) {
+    const simplifiedError = handlePrismaClientUnknownError(err);
+    statusCode = simplifiedError.statusCode as number;
+    message = simplifiedError.message;
+    errorSources = [...simplifiedError.errorSources];
+    stack = err.stack;
+  } else if (err instanceof Prisma.PrismaClientValidationError) {
+    const simplifiedError = handlePrismaClientValidationError(err);
+    statusCode = simplifiedError.statusCode as number;
+    message = simplifiedError.message;
+    errorSources = [...simplifiedError.errorSources];
+    stack = err.stack;
+  } else if (err instanceof Prisma.PrismaClientRustPanicError) {
+    const simplifiedError = handlerPrismaClientRustPanicError();
+    statusCode = simplifiedError.statusCode as number;
+    message = simplifiedError.message;
+    errorSources = [...simplifiedError.errorSources];
+    stack = err.stack;
+  } else if (err instanceof Prisma.PrismaClientInitializationError) {
+    const simplifiedError = handlerPrismaClientInitializationError(err);
+    statusCode = simplifiedError.statusCode as number;
+    message = simplifiedError.message;
+    errorSources = [...simplifiedError.errorSources];
+    stack = err.stack;
+  } else if (err instanceof z.ZodError) {
     const simplifiedError = handleZodError(err);
     statusCode = simplifiedError.statusCode as number;
     message = simplifiedError.message;

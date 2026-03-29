@@ -109,6 +109,14 @@ const rejectReview = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "Review rejected successfully", result);
 });
 
+const likeReview = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user as IRequestUser;
+  const { id } = req.params;
+  const result = await ReviewService.toggleLikeReviewIntoDB(id as string, userId);
+
+  sendResponse(res, status.OK, true, result.liked ? "Review liked" : "Review unliked", result);
+});
+
 export const ReviewController = {
   getAllReviews,
   getPendingReviews,
@@ -119,4 +127,5 @@ export const ReviewController = {
   deleteReview,
   approveReview,
   rejectReview,
+  likeReview,
 };

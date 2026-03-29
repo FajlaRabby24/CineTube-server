@@ -1,7 +1,7 @@
 Method  Route                              Description                                      Access
 ------------------------------------------------------------------------------------------------------
 
-=== AUTH ===
+=== AUTH === ✅
 POST    /api/v1/auth/register                 নতুন user register                               Public
 POST    /api/v1/auth/login                    Login — sessionId + accessToken + refreshToken   Public
 POST    /api/v1/auth/forgot-password          Password reset email পাঠাও                       Public
@@ -12,7 +12,7 @@ GET     /api/v1/auth/sessions                 সব active sessions (devices) �
 DELETE  /api/v1/auth/sessions/:sessionId      Specific device logout (current device ও)        Auth
 DELETE  /api/v1/auth/sessions                 সব device logout — current device বাদে           Auth
 
-=== MEDIA ===
+=== MEDIA === ✅
 GET     /api/v1/media                         সব media list — filter/sort/paginate             Public
 GET     /api/v1/media/featured                Featured media আনো                              Public
 GET     /api/v1/media/trending                Trending media আনো                              Public
@@ -23,7 +23,7 @@ POST    /api/v1/media                         নতুন media তৈরি �
 PATCH   /api/v1/media/:id                     Media update করো                                 Admin
 DELETE  /api/v1/media/:id                     Media delete করো                                 Admin
 
-=== REVIEW ===
+=== REVIEW === ✅
 GET     /api/v1/reviews                       সব approved reviews — paginated                  Public
 GET     /api/v1/reviews/pending               Pending reviews list                             Admin
 GET     /api/v1/reviews/:id                   একটা review এর details                           Public
@@ -75,7 +75,7 @@ GET     /api/v1/notifications                 নিজের notifications আ�
 PATCH   /api/v1/notifications/read-all        সব notification read mark করো                    Auth
 PATCH   /api/v1/notifications/:id/read        একটা notification read করো                       Auth
 
-=== ADMIN ===
+=== ADMIN === ✅
 GET     /api/v1/admin/stats                   Dashboard stats — users, media, revenue          Admin
 GET     /api/v1/admin/users                   সব users list                                    Admin
 PATCH   /api/v1/admin/users/:id/ban           User ban/unban করো                               Admin

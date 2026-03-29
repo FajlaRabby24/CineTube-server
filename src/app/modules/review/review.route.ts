@@ -50,4 +50,10 @@ router.patch(
   ReviewController.rejectReview,
 );
 
+router.post(
+  "/:id/like",
+  checkAuth(),
+  ReviewController.likeReview,
+);
+
 export const ReviewRoutes = router;

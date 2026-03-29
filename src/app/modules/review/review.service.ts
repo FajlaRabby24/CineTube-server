@@ -284,6 +284,42 @@ const calculateNewAverageRating = async (
   return Math.round((total / reviews.length) * 10) / 10;
 };
 
+const toggleLikeReviewIntoDB = async (reviewId: string, userId: string) => {
+  const review = await prisma.review.findUnique({ where: { id: reviewId } });
+
+  if (!review) {
+    throw new AppError(status.NOT_FOUND, "Review not found");
+  }
+
+  const existingLike = await prisma.reviewLike.findUnique({
+    where: { userId_reviewId: { userId, reviewId } },
+  });
+
+  if (existingLike) {
+    await prisma.$transaction([
+      prisma.reviewLike.delete({
+        where: { id: existingLike.id },
+      }),
+      prisma.review.update({
+        where: { id: reviewId },
+        data: { likesCount: { decrement: 1 } },
+      }),
+    ]);
+    return { liked: false, likesCount: review.likesCount - 1 };
+  } else {
+    await prisma.$transaction([
+      prisma.reviewLike.create({
+        data: { userId, reviewId },
+      }),
+      prisma.review.update({
+        where: { id: reviewId },
+        data: { likesCount: { increment: 1 } },
+      }),
+    ]);
+    return { liked: true, likesCount: review.likesCount + 1 };
+  }
+};
+
 export const ReviewService = {
   getAllApprovedReviewsFromDB,
   getPendingReviewsFromDB,
@@ -294,4 +330,5 @@ export const ReviewService = {
   deleteReviewFromDB,
   approveReviewIntoDB,
   rejectReviewIntoDB,
+  toggleLikeReviewIntoDB,
 };

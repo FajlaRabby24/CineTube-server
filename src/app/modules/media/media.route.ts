@@ -9,10 +9,6 @@ const router = Router();
 
 // Public routes
 router.get("/", MediaController.getAllMedia);
-router.get("/featured", MediaController.getFeaturedMedia);
-router.get("/trending", MediaController.getTrendingMedia);
-router.get("/editors-picks", MediaController.getEditorsPicks);
-router.get("/search", MediaController.getAllMedia); // Reuse getAllMedia for search
 router.get("/:slug", MediaController.getMediaBySlug);
 
 // Admin routes

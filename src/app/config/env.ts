@@ -11,6 +11,8 @@ const envSchema = z.object({
   NAME: z.string().optional(),
   EMAIL: z.email().optional(),
   PASSWORD: z.string().min(6).optional(),
+  BIO: z.string().optional(),
+  PHONE_NUMBER: z.string().min(10).max(150).optional(),
   DATABASE_URL: z.url(),
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.url(),

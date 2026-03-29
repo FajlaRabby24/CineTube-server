@@ -82,16 +82,7 @@ enum Genre {
 }
 
 enum StreamingPlatform {
-  NETFLIX
-  DISNEY_PLUS
-  AMAZON_PRIME
-  HBO_MAX
-  APPLE_TV
-  HULU
   YOUTUBE
-  PEACOCK
-  PARAMOUNT_PLUS
-  OTHER
 }
 
 enum NotificationType {

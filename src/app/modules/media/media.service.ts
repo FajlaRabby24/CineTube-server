@@ -1,4 +1,5 @@
 import status from "http-status";
+import { Media, Prisma } from "../../../generated/prisma/client";
 import { AuditAction } from "../../../generated/prisma/enums";
 import AppError from "../../errorhandlers/AppError";
 import { prisma } from "../../lib/prisma";
@@ -94,7 +95,11 @@ const createMediaIntoDB = async (
 };
 
 const getAllMediaFromDB = async (query: Record<string, any>) => {
-  const mediaQuery = new QueryBuilder(prisma.media, query, {
+  const mediaQuery = new QueryBuilder<
+    Media,
+    Prisma.MediaWhereInput,
+    Prisma.MediaInclude
+  >(prisma.media, query, {
     searchableFields: ["title", "synopsis"],
     filterableFields: [
       "type",
@@ -289,37 +294,10 @@ const deleteMediaFromDB = async (adminId: string, id: string) => {
   return null;
 };
 
-const getFeaturedMediaFromDB = async () => {
-  return await prisma.media.findMany({
-    where: { isFeatured: true, status: "PUBLISHED" },
-    take: 10,
-    include: { genres: true },
-  });
-};
-
-const getTrendingMediaFromDB = async () => {
-  return await prisma.media.findMany({
-    where: { isTrending: true, status: "PUBLISHED" },
-    take: 10,
-    include: { genres: true },
-  });
-};
-
-const getEditorsPicksFromDB = async () => {
-  return await prisma.media.findMany({
-    where: { isEditorsPick: true, status: "PUBLISHED" },
-    take: 10,
-    include: { genres: true },
-  });
-};
-
 export const MediaService = {
   createMediaIntoDB,
   getAllMediaFromDB,
   getMediaBySlugFromDB,
   updateMediaInDB,
   deleteMediaFromDB,
-  getFeaturedMediaFromDB,
-  getTrendingMediaFromDB,
-  getEditorsPicksFromDB,
 };

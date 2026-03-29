@@ -21,7 +21,9 @@ const seedSuperAdmin = async () => {
     const password = envVars.PASSWORD;
 
     if (!name || !email || !password) {
-      throw new Error("NAME, EMAIL, and PASSWORD environment variables are required for seeding super admin");
+      throw new Error(
+        "NAME, EMAIL, and PASSWORD environment variables are required for seeding super admin",
+      );
     }
 
     const superAdminData = await auth.api.signUpEmail({
@@ -29,6 +31,7 @@ const seedSuperAdmin = async () => {
         name,
         email,
         password,
+        role: Role.SUPER_ADMIN,
       },
     });
 
@@ -38,8 +41,9 @@ const seedSuperAdmin = async () => {
           id: superAdminData.user.id,
         },
         data: {
-          role: Role.SUPER_ADMIN,
           emailVerified: true,
+          bio: envVars.BIO!,
+          phoneNumber: envVars.PHONE_NUMBER!,
         },
       });
 

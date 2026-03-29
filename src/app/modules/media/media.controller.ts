@@ -18,42 +18,6 @@ const getAllMedia = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "Media retrieved successfully", result);
 });
 
-const getFeaturedMedia = catchAsync(async (req: Request, res: Response) => {
-  const result = await MediaService.getFeaturedMediaFromDB();
-
-  sendResponse(
-    res,
-    status.OK,
-    true,
-    "Featured media retrieved successfully",
-    result,
-  );
-});
-
-const getTrendingMedia = catchAsync(async (req: Request, res: Response) => {
-  const result = await MediaService.getTrendingMediaFromDB();
-
-  sendResponse(
-    res,
-    status.OK,
-    true,
-    "Trending media retrieved successfully",
-    result,
-  );
-});
-
-const getEditorsPicks = catchAsync(async (req: Request, res: Response) => {
-  const result = await MediaService.getEditorsPicksFromDB();
-
-  sendResponse(
-    res,
-    status.OK,
-    true,
-    "Editor's picks retrieved successfully",
-    result,
-  );
-});
-
 const getMediaBySlug = catchAsync(async (req: Request, res: Response) => {
   const { slug } = req.params;
   const result = await MediaService.getMediaBySlugFromDB(slug as string);
@@ -90,9 +54,6 @@ const deleteMedia = catchAsync(async (req: Request, res: Response) => {
 export const MediaController = {
   createMedia,
   getAllMedia,
-  getFeaturedMedia,
-  getTrendingMedia,
-  getEditorsPicks,
   getMediaBySlug,
   updateMedia,
   deleteMedia,

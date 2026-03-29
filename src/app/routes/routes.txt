@@ -70,7 +70,7 @@ GET     /api/v1/reports                       সব pending reports            
 PATCH   /api/v1/reports/:id/resolve           Report resolve করো                               Admin
 PATCH   /api/v1/reports/:id/dismiss           Report dismiss করো                               Admin
 
-=== NOTIFICATION ===
+=== NOTIFICATION === ✅
 GET     /api/v1/notifications                 নিজের notifications আনো                          Auth
 PATCH   /api/v1/notifications/read-all        সব notification read mark করো                    Auth
 PATCH   /api/v1/notifications/:id/read        একটা notification read করো                       Auth

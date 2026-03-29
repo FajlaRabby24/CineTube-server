@@ -50,7 +50,7 @@ GET     /api/v1/watchlist                     নিজের watchlist আন�
 POST    /api/v1/watchlist/:mediaId            Watchlist এ add করো                              Auth
 DELETE  /api/v1/watchlist/:mediaId            Watchlist থেকে remove করো                        Auth
 
-=== TAG ===
+=== TAG === ✅
 GET     /api/v1/tags                          সব tags আনো                                     Public
 POST    /api/v1/tags                          নতুন tag তৈরি করো                                Admin
 DELETE  /api/v1/tags/:id                      Tag delete করো                                   Admin

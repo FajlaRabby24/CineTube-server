@@ -6,18 +6,7 @@ import { CommentValidation } from "./comment.validation";
 
 const router = Router();
 
-router.get(
-  "/review/:reviewId",
-  CommentController.getCommentsByReview,
-);
-
-router.post(
-  "/review/:reviewId",
-  checkAuth(),
-  validateRequest(CommentValidation.createCommentSchema),
-  CommentController.createComment,
-);
-
+// Replies, Updates, and Deletions
 router.post(
   "/:id/reply",
   checkAuth(),

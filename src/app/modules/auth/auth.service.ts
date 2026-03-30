@@ -324,6 +324,29 @@ const getMe = async (user: IRequestUser) => {
   return isUserExists;
 };
 
+const getUserSessions = async (userId: string) => {
+  const sessions = await prisma.session.findMany({
+    where: {
+      userId,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+    select: {
+      id: true,
+      userAgent: true,
+      ipAddress: true,
+      createdAt: true,
+      expiresAt: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return sessions;
+};
+
 const profileUpdate = async (userId: string, payload: IUpdatePayload) => {
   const isUserExists = await prisma.user.findUnique({
     where: {
@@ -392,4 +415,5 @@ export const authService = {
   getMe,
   getSession,
   profileUpdate,
+  getUserSessions,
 };

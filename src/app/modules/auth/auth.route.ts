@@ -20,7 +20,7 @@ router.post(
 router.get("/me", checkAuth(), authController.getMe);
 
 router.patch(
-  "/profile-update",
+  "/me",
   checkAuth(),
   validateRequest(authValidation.updateProfileSchema),
   authController.profileUpdate,
@@ -51,10 +51,12 @@ router.post(
   authController.resetPassword,
 );
 
-router.delete("/logout/:sessionId", checkAuth(), authController.logoutSession);
+router.get("/sessions", checkAuth(), authController.getSessions);
+
+router.delete("/sessions/:sessionId", checkAuth(), authController.logoutSession);
 
 router.delete(
-  "/logout-all/:token",
+  "/sessions",
   checkAuth(),
   authController.logoutAllSession,
 );

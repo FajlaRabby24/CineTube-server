@@ -62,6 +62,24 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
   );
 });
 
+const getSessions = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as IRequestUser;
+
+  if (!user) {
+    return sendResponse(res, status.UNAUTHORIZED, false, "Unauthorized");
+  }
+
+  const result = await authService.getUserSessions(user.userId);
+
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "User sessions fetched successfully",
+    result,
+  );
+});
+
 const profileUpdate = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as IRequestUser;
   const payload = req.body;
@@ -146,18 +164,19 @@ const logoutAllSession = catchAsync(async (req: Request, res: Response) => {
   if (!user) {
     return sendResponse(res, status.UNAUTHORIZED, false, "Unauthorized");
   }
-  const token = req.params.token;
-  if (!token) throw new Error("Token not found");
+  const token = req.cookies["better-auth.session_token"];
+  if (!token) throw new Error("Session token not found");
 
   await authService.logoutAllSession(user.userId, token as string);
 
-  sendResponse(res, status.OK, true, "Logged out successfully");
+  sendResponse(res, status.OK, true, "Logged out from other sessions successfully");
 });
 
 export const authController = {
   register,
   login,
   getMe,
+  getSessions,
   changePassword,
   verifyEmail,
   forgotPassword,

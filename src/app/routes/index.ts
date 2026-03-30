@@ -23,7 +23,7 @@ router.use("/comments", CommentRoutes);
 router.use("/notifications", NotificationRoutes);
 router.use("/watchlist", WatchlistRoutes);
 router.use("/tags", TagRoutes);
-router.use("/subscription", SubscriptionRoutes);
+router.use("/subscriptions", SubscriptionRoutes);
 router.use("/payments", PaymentRoutes);
 router.use("/pricing", PricingRoutes);
 router.use("/reports", ReportRoutes);

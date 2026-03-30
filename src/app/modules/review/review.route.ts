@@ -2,6 +2,8 @@ import { Router } from "express";
 import { Role } from "../../../generated/prisma/enums";
 import { checkAuth } from "../../middleware/checkAuth";
 import { validateRequest } from "../../middleware/validateRequest";
+import { CommentController } from "../comment/comment.controller";
+import { CommentValidation } from "../comment/comment.validation";
 import { ReviewController } from "./review.controller";
 import { ReviewValidation } from "./review.validation";
 
@@ -54,6 +56,19 @@ router.post(
   "/:id/like",
   checkAuth(),
   ReviewController.likeReview,
+);
+
+// Nested Comment Routes
+router.get(
+  "/:reviewId/comments",
+  CommentController.getCommentsByReview,
+);
+
+router.post(
+  "/:reviewId/comments",
+  checkAuth(),
+  validateRequest(CommentValidation.createCommentSchema),
+  CommentController.createComment,
 );
 
 export const ReviewRoutes = router;

@@ -10,7 +10,7 @@ const router = Router();
 router.get("/", PricingController.getAllPricingPlans);
 
 router.patch(
-  "/:id",
+  "/:pricingId",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   validateRequest(PricingValidation.updatePricingPlanSchema),
   PricingController.updatePricingPlan,

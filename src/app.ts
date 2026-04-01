@@ -1,7 +1,7 @@
 import { toNodeHandler } from "better-auth/node";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, { Application } from "express";
+import express, { Application, Request, Response } from "express";
 import helmet from "helmet";
 import { envVars } from "./app/config/env";
 import { auth } from "./app/lib/auth";
@@ -15,7 +15,14 @@ app.use(helmet());
 
 app.use("/api/auth/", toNodeHandler(auth));
 
-// app.use("/api/v1/webhook", express.raw({ type: "application/json" }));
+app.use(
+  "/api/v1/webhook",
+  express.raw({ type: "application/json" }),
+  async (req: Request, res: Response) => {
+    console.log("webhook recevied", req.body);
+    res.status(200).send("ok");
+  },
+);
 
 app.use(express.urlencoded({ extended: true }));
 

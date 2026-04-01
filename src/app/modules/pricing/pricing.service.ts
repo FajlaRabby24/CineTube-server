@@ -1,7 +1,7 @@
 import status from "http-status";
-import { SubscriptionPlan } from "../../../generated/prisma/client";
 import AppError from "../../errorhandlers/AppError.js";
 import { prisma } from "../../lib/prisma.js";
+import { IPricingUpdatePaylod } from "./pricing.type.js";
 
 const getAllPricingPlansFromDB = async () => {
   const result = await prisma.pricingPlan.findMany({
@@ -13,17 +13,12 @@ const getAllPricingPlansFromDB = async () => {
 };
 
 const updatePricingPlanFromDB = async (
-  id: string,
-  payload: {
-    name?: string;
-    price?: number;
-    features?: string[];
-    isActive?: boolean;
-    isPopular?: boolean;
-    stripePriceId?: string | null;
-  },
+  pricingId: string,
+  payload: IPricingUpdatePaylod,
 ) => {
-  const plan = await prisma.pricingPlan.findUnique({ where: { id } });
+  const plan = await prisma.pricingPlan.findUnique({
+    where: { id: pricingId },
+  });
 
   if (!plan) {
     throw new AppError(status.NOT_FOUND, "Pricing plan not found");
@@ -34,7 +29,7 @@ const updatePricingPlanFromDB = async (
   }
 
   const result = await prisma.pricingPlan.update({
-    where: { id },
+    where: { id: pricingId },
     data: payload,
   });
 

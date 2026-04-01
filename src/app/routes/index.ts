@@ -4,8 +4,11 @@ import { authRoute } from "../modules/auth/auth.route";
 import { CommentRoutes } from "../modules/comment/comment.route";
 import { MediaRoutes } from "../modules/media/media.route";
 import { NotificationRoutes } from "../modules/notification/notification.route";
+import { PaymentRoutes } from "../modules/payment/payment.route";
+import { PricingRoutes } from "../modules/pricing/pricing.route";
 import { ReportRoutes } from "../modules/report/report.route";
 import { ReviewRoutes } from "../modules/review/review.route";
+import { SubscriptionRoutes } from "../modules/subscription/subscription.route";
 import { TagRoutes } from "../modules/tag/tag.route";
 import { WatchlistRoutes } from "../modules/watchlist/watchlist.route";
 
@@ -20,9 +23,9 @@ router.use("/watchlist", WatchlistRoutes);
 router.use("/tags", TagRoutes);
 router.use("/reports", ReportRoutes);
 router.use("/notifications", NotificationRoutes);
-// router.use("/subscriptions", SubscriptionRoutes);
-// router.use("/payments", PaymentRoutes);
-// router.use("/pricing", PricingRoutes);
+router.use("/payments", PaymentRoutes);
+router.use("/pricing", PricingRoutes);
+router.use("/subscriptions", SubscriptionRoutes);
 // router.use("/webhook", WebhookRoutes);
 
 export const indexRoute = router;

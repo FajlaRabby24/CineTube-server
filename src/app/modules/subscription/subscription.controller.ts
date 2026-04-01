@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import status from "http-status";
 import Stripe from "stripe";
-import { SubscriptionPlan } from "../../../generated/prisma/client";
 import { IRequestUser } from "../../interfaces/requestUser.interface.js";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
@@ -22,7 +21,7 @@ const getUserSubscription = catchAsync(async (req: Request, res: Response) => {
 
 const createCheckout = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as IRequestUser;
-  const { plan } = req.body as { plan: SubscriptionPlan };
+  const { plan } = req.body;
   const result = await SubscriptionService.createCheckoutSession(userId, plan);
 
   sendResponse(res, status.OK, true, "Checkout session created", result);

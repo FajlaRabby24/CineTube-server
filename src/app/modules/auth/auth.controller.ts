@@ -169,7 +169,12 @@ const logoutAllSession = catchAsync(async (req: Request, res: Response) => {
 
   await authService.logoutAllSession(user.userId, token as string);
 
-  sendResponse(res, status.OK, true, "Logged out from other sessions successfully");
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "Logged out from other sessions successfully",
+  );
 });
 
 export const authController = {

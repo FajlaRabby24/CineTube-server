@@ -8,29 +8,21 @@ const router = Router();
 
 // Replies, Updates, and Deletions
 router.post(
-  "/:id/reply",
+  "/:commentId/reply",
   checkAuth(),
   validateRequest(CommentValidation.createCommentSchema),
   CommentController.createReply,
 );
 
 router.patch(
-  "/:id",
+  "/:commentId",
   checkAuth(),
   validateRequest(CommentValidation.updateCommentSchema),
   CommentController.updateComment,
 );
 
-router.delete(
-  "/:id",
-  checkAuth(),
-  CommentController.deleteComment,
-);
+router.delete("/:commentId", checkAuth(), CommentController.deleteComment);
 
-router.post(
-  "/:id/like",
-  checkAuth(),
-  CommentController.likeComment,
-);
+router.post("/:commentId/like", checkAuth(), CommentController.likeComment);
 
 export const CommentRoutes = router;

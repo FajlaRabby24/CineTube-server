@@ -17,10 +17,10 @@ router.get(
   ReviewController.getPendingReviews,
 );
 
-router.get("/:id", ReviewController.getReviewById);
+router.get("/:reviewId", ReviewController.getReviewById);
 
 router.post(
-  "/",
+  "/:mediaId",
   checkAuth(),
   validateRequest(ReviewValidation.createReviewSchema),
   ReviewController.createReview,
@@ -33,36 +33,25 @@ router.patch(
   ReviewController.updateReview,
 );
 
-router.delete(
-  "/:id",
-  checkAuth(),
-  ReviewController.deleteReview,
-);
+router.delete("/:reviewId", checkAuth(), ReviewController.deleteReview);
 
 router.patch(
-  "/:id/approve",
+  "/:reviewId/approve",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   ReviewController.approveReview,
 );
 
 router.patch(
-  "/:id/reject",
+  "/:reviewId/reject",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   validateRequest(ReviewValidation.rejectReviewSchema),
   ReviewController.rejectReview,
 );
 
-router.post(
-  "/:id/like",
-  checkAuth(),
-  ReviewController.likeReview,
-);
+router.post("/:reviewId/like", checkAuth(), ReviewController.likeReview);
 
 // Nested Comment Routes
-router.get(
-  "/:reviewId/comments",
-  CommentController.getCommentsByReview,
-);
+router.get("/:reviewId/comments", CommentController.getCommentsByReview);
 
 router.post(
   "/:reviewId/comments",

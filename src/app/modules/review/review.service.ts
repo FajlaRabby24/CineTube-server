@@ -1,5 +1,11 @@
 import status from "http-status";
-import { Prisma, Review, ReviewStatus } from "../../../generated/prisma/client";
+import {
+  AuditAction,
+  NotificationType,
+  Prisma,
+  Review,
+  ReviewStatus,
+} from "../../../generated/prisma/client";
 import AppError from "../../errorhandlers/AppError.js";
 import { IQueryParams } from "../../interfaces/query.interface.js";
 import { prisma } from "../../lib/prisma.js";
@@ -133,7 +139,7 @@ const createReviewIntoDB = async (
       title: payload.title ?? null,
       content: payload.content,
       hasSpoiler: payload.hasSpoiler ?? false,
-      status: "PENDING",
+      status: ReviewStatus.PENDING,
     },
     include: reviewInclude,
   });
@@ -186,8 +192,8 @@ const updateReviewIntoDB = async (
   return result;
 };
 
-const deleteReviewFromDB = async (id: string, userId: string) => {
-  const review = await prisma.review.findUnique({ where: { id } });
+const deleteReviewFromDB = async (reviewId: string, userId: string) => {
+  const review = await prisma.review.findUnique({ where: { id: reviewId } });
 
   if (!review) {
     throw new AppError(status.NOT_FOUND, "Review not found");
@@ -200,11 +206,11 @@ const deleteReviewFromDB = async (id: string, userId: string) => {
     );
   }
 
-  await prisma.review.delete({ where: { id } });
+  await prisma.review.delete({ where: { id: reviewId } });
 };
 
-const approveReviewIntoDB = async (id: string, adminId: string) => {
-  const review = await prisma.review.findUnique({ where: { id } });
+const approveReviewIntoDB = async (reviewId: string, adminId: string) => {
+  const review = await prisma.review.findUnique({ where: { id: reviewId } });
 
   if (!review) {
     throw new AppError(status.NOT_FOUND, "Review not found");
@@ -221,7 +227,7 @@ const approveReviewIntoDB = async (id: string, adminId: string) => {
 
   const [updatedReview] = await prisma.$transaction([
     prisma.review.update({
-      where: { id },
+      where: { id: reviewId },
       data: {
         status: ReviewStatus.APPROVED,
         publishedAt: new Date(),
@@ -236,17 +242,34 @@ const approveReviewIntoDB = async (id: string, adminId: string) => {
         averageRating: { set: averageRating },
       },
     }),
+    prisma.auditLog.create({
+      data: {
+        adminId,
+        action: AuditAction.REVIEW_APPROVED,
+        targetId: reviewId,
+        details: `Approved review for media: ${review.mediaId}`,
+      },
+    }),
+    prisma.notification.create({
+      data: {
+        userId: review.userId,
+        type: NotificationType.REVIEW_APPROVED,
+        title: "Your Review has been Approved",
+        message: "Congratulations! Your review has been approved and is now visible to the public.",
+        link: `/reviews/${reviewId}`,
+      },
+    }),
   ]);
 
   return updatedReview;
 };
 
 const rejectReviewIntoDB = async (
-  id: string,
+  reviewId: string,
   adminId: string,
   payload: IRejectReviewPayload,
 ) => {
-  const review = await prisma.review.findUnique({ where: { id } });
+  const review = await prisma.review.findUnique({ where: { id: reviewId } });
 
   if (!review) {
     throw new AppError(status.NOT_FOUND, "Review not found");
@@ -256,14 +279,37 @@ const rejectReviewIntoDB = async (
     throw new AppError(status.BAD_REQUEST, "Review is already rejected");
   }
 
-  const result = await prisma.review.update({
-    where: { id },
-    data: {
-      status: ReviewStatus.REJECTED,
-      rejectedReason: payload.reason,
-      moderatedBy: adminId,
-    },
-    include: reviewInclude,
+  const result = await prisma.$transaction(async (tx) => {
+    const updated = await tx.review.update({
+      where: { id: reviewId },
+      data: {
+        status: ReviewStatus.REJECTED,
+        rejectedReason: payload.reason,
+        moderatedBy: adminId,
+      },
+      include: reviewInclude,
+    });
+
+    await tx.auditLog.create({
+      data: {
+        adminId,
+        action: AuditAction.REVIEW_REJECTED,
+        targetId: reviewId,
+        details: `Rejected review for media: ${review.mediaId}. Reason: ${payload.reason}`,
+      },
+    });
+
+    await tx.notification.create({
+      data: {
+        userId: review.userId,
+        type: NotificationType.REVIEW_REJECTED,
+        title: "Your Review has been Rejected",
+        message: `Your review was rejected. Reason: ${payload.reason}`,
+        link: `/reviews/${reviewId}`,
+      },
+    });
+
+    return updated;
   });
 
   return result;
@@ -292,7 +338,12 @@ const toggleLikeReviewIntoDB = async (reviewId: string, userId: string) => {
   }
 
   const existingLike = await prisma.reviewLike.findUnique({
-    where: { userId_reviewId: { userId, reviewId } },
+    where: {
+      userId_reviewId: {
+        userId,
+        reviewId,
+      },
+    },
   });
 
   if (existingLike) {

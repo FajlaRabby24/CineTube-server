@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import status from "http-status";
-import { IRequestUser } from "../../interfaces/requestUser.interface.js";
 import { IQueryParams } from "../../interfaces/query.interface.js";
+import { IRequestUser } from "../../interfaces/requestUser.interface.js";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { NotificationService } from "./notification.service.js";
@@ -31,8 +31,11 @@ const markAllAsRead = catchAsync(async (req: Request, res: Response) => {
 
 const markAsRead = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as IRequestUser;
-  const { id } = req.params;
-  const result = await NotificationService.markAsReadFromDB(id as string, userId);
+  const { notificationId } = req.params;
+  const result = await NotificationService.markAsReadFromDB(
+    userId,
+    notificationId as string,
+  );
 
   sendResponse(res, status.OK, true, "Notification marked as read", result);
 });

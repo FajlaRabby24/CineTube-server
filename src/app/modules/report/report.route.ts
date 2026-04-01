@@ -21,14 +21,14 @@ router.get(
 );
 
 router.patch(
-  "/:id/resolve",
+  "/:reportId/resolve",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   validateRequest(ReportValidation.resolveReportSchema),
   ReportController.resolveReport,
 );
 
 router.patch(
-  "/:id/dismiss",
+  "/:reportId/dismiss",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   ReportController.dismissReport,
 );

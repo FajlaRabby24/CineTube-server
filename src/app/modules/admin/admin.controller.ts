@@ -28,12 +28,18 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "Users retrieved successfully", result);
 });
 
+const getAllAdmin = catchAsync(async (req: Request, res: Response) => {
+  const result = await AdminService.getAllAdmins(req.query);
+
+  sendResponse(res, status.OK, true, "Admins retrieved successfully", result);
+});
+
 const banUnbanUser = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { userId } = req.params;
   const adminId = (req as any).user.userId;
   const result = await AdminService.banUnbanUser(
     adminId,
-    id as string,
+    userId as string,
     req.body,
   );
 
@@ -70,12 +76,13 @@ const getPaymentAnalytics = catchAsync(async (req: Request, res: Response) => {
   );
 });
 
+// TODO: check this route after payment is implemented
 const refundPayment = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const adminId = (req as any).user.userId;
+  const { paymentId } = req.params;
+  const adminId = req.user?.userId;
   const result = await AdminService.refundPayment(
     adminId,
-    id as string,
+    paymentId as string,
     req.body,
   );
 
@@ -90,4 +97,5 @@ export const AdminController = {
   getAuditLogs,
   getPaymentAnalytics,
   refundPayment,
+  getAllAdmin,
 };

@@ -17,7 +17,7 @@ router.post(
 );
 
 router.delete(
-  "/:id",
+  "/:tagId",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   TagController.deleteTag,
 );

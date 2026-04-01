@@ -130,6 +130,7 @@ const getAllMediaFromDB = async (query: Record<string, any>) => {
   return await mediaQuery.execute();
 };
 
+// TODO: make in querybuilder
 const getMediaBySlugFromDB = async (slug: string) => {
   const result = await prisma.media.findUnique({
     where: { slug },
@@ -165,14 +166,14 @@ const getMediaBySlugFromDB = async (slug: string) => {
 
 const updateMediaInDB = async (
   adminId: string,
-  id: string,
+  mediaId: string,
   payload: IUpdateMediaPayload,
 ) => {
   const { genres, platforms, castMembers, directors, tags, ...mediaData } =
     payload;
 
   const isMediaExists = await prisma.media.findUnique({
-    where: { id },
+    where: { id: mediaId },
   });
 
   if (!isMediaExists) {
@@ -187,7 +188,7 @@ const updateMediaInDB = async (
   const result = await prisma.$transaction(async (tx) => {
     // 1. Update basic fields
     const updatedMedia = await tx.media.update({
-      where: { id },
+      where: { id: mediaId },
       data: {
         ...filteredMediaData,
         updatedAt: new Date(),
@@ -196,17 +197,17 @@ const updateMediaInDB = async (
 
     // 2. Update relations if provided
     if (genres) {
-      await tx.mediaGenre.deleteMany({ where: { mediaId: id } });
+      await tx.mediaGenre.deleteMany({ where: { mediaId } });
       await tx.mediaGenre.createMany({
-        data: genres.map((genre: any) => ({ mediaId: id, genre })),
+        data: genres.map((genre: any) => ({ mediaId, genre })),
       });
     }
 
     if (platforms) {
-      await tx.mediaPlatform.deleteMany({ where: { mediaId: id } });
+      await tx.mediaPlatform.deleteMany({ where: { mediaId } });
       await tx.mediaPlatform.createMany({
         data: platforms.map((p: any) => ({
-          mediaId: id,
+          mediaId,
           platform: p.platform,
           streamUrl: p.streamUrl,
         })),
@@ -214,10 +215,10 @@ const updateMediaInDB = async (
     }
 
     if (castMembers) {
-      await tx.mediaCast.deleteMany({ where: { mediaId: id } });
+      await tx.mediaCast.deleteMany({ where: { mediaId } });
       await tx.mediaCast.createMany({
         data: castMembers.map((c: any, index: number) => ({
-          mediaId: id,
+          mediaId,
           ...c,
           orderIndex: index,
         })),
@@ -225,17 +226,17 @@ const updateMediaInDB = async (
     }
 
     if (directors) {
-      await tx.mediaDirector.deleteMany({ where: { mediaId: id } });
+      await tx.mediaDirector.deleteMany({ where: { mediaId } });
       await tx.mediaDirector.createMany({
         data: directors.map((d: any) => ({
-          mediaId: id,
+          mediaId,
           ...d,
         })),
       });
     }
 
     if (tags) {
-      await tx.mediaTag.deleteMany({ where: { mediaId: id } });
+      await tx.mediaTag.deleteMany({ where: { mediaId } });
       for (const tagName of tags) {
         const tag = await tx.tag.upsert({
           where: { name: tagName },
@@ -245,7 +246,7 @@ const updateMediaInDB = async (
 
         await tx.mediaTag.create({
           data: {
-            mediaId: id,
+            mediaId,
             tagId: tag.id,
           },
         });
@@ -256,7 +257,7 @@ const updateMediaInDB = async (
       data: {
         adminId,
         action: AuditAction.MEDIA_UPDATED,
-        targetId: id,
+        targetId: mediaId,
         details: `Updated media: ${isMediaExists.title}`,
       },
     });
@@ -267,9 +268,9 @@ const updateMediaInDB = async (
   return result;
 };
 
-const deleteMediaFromDB = async (adminId: string, id: string) => {
+const deleteMediaFromDB = async (adminId: string, mediaId: string) => {
   const isMediaExists = await prisma.media.findUnique({
-    where: { id },
+    where: { id: mediaId },
   });
 
   if (!isMediaExists) {
@@ -278,14 +279,14 @@ const deleteMediaFromDB = async (adminId: string, id: string) => {
 
   await prisma.$transaction(async (tx) => {
     await tx.media.delete({
-      where: { id },
+      where: { id: mediaId },
     });
 
     await tx.auditLog.create({
       data: {
         adminId,
         action: AuditAction.MEDIA_DELETED,
-        targetId: id,
+        targetId: mediaId,
         details: `Deleted media: ${isMediaExists.title}`,
       },
     });

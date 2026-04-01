@@ -53,12 +53,12 @@ router.post(
 
 router.get("/sessions", checkAuth(), authController.getSessions);
 
-router.delete("/sessions/:sessionId", checkAuth(), authController.logoutSession);
-
 router.delete(
-  "/sessions",
+  "/logout/all-sessions",
   checkAuth(),
   authController.logoutAllSession,
 );
+
+router.delete("/logout/:sessionId", checkAuth(), authController.logoutSession);
 
 export const authRoute = router;

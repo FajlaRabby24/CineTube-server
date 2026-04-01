@@ -26,8 +26,14 @@ router.get(
   AdminController.getAllUsers,
 );
 
+router.get(
+  "/admins",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  AdminController.getAllAdmin,
+);
+
 router.patch(
-  "/users/:id/ban",
+  "/users/:userId/ban",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   validateRequest(AdminValidation.banUserSchema),
   AdminController.banUnbanUser,
@@ -45,8 +51,9 @@ router.get(
   AdminController.getPaymentAnalytics,
 );
 
+// TODO: check this route after payment is implemented
 router.post(
-  "/payments/:id/refund",
+  "/payments/:paymentId/refund",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   validateRequest(AdminValidation.refundPaymentSchema),
   AdminController.refundPayment,

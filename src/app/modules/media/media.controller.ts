@@ -18,57 +18,6 @@ const getAllMedia = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "Media retrieved successfully", result);
 });
 
-const getFeaturedMedia = catchAsync(async (req: Request, res: Response) => {
-  const result = await MediaService.getAllMediaFromDB({
-    ...req.query,
-    isFeatured: "true",
-  });
-
-  sendResponse(
-    res,
-    status.OK,
-    true,
-    "Featured media retrieved successfully",
-    result,
-  );
-});
-
-const getTrendingMedia = catchAsync(async (req: Request, res: Response) => {
-  const result = await MediaService.getAllMediaFromDB({
-    ...req.query,
-    isTrending: "true",
-  });
-
-  sendResponse(
-    res,
-    status.OK,
-    true,
-    "Trending media retrieved successfully",
-    result,
-  );
-});
-
-const getEditorsPicks = catchAsync(async (req: Request, res: Response) => {
-  const result = await MediaService.getAllMediaFromDB({
-    ...req.query,
-    isEditorsPick: "true",
-  });
-
-  sendResponse(
-    res,
-    status.OK,
-    true,
-    "Editor's picks retrieved successfully",
-    result,
-  );
-});
-
-const searchMedia = catchAsync(async (req: Request, res: Response) => {
-  const result = await MediaService.getAllMediaFromDB(req.query);
-
-  sendResponse(res, status.OK, true, "Media search results retrieved", result);
-});
-
 const getMediaBySlug = catchAsync(async (req: Request, res: Response) => {
   const { slug } = req.params;
   const result = await MediaService.getMediaBySlugFromDB(slug as string);
@@ -83,11 +32,11 @@ const getMediaBySlug = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateMedia = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { mediaId } = req.params;
   const adminId = req.user.userId;
   const result = await MediaService.updateMediaInDB(
     adminId,
-    id as string,
+    mediaId as string,
     req.body,
   );
 
@@ -95,9 +44,9 @@ const updateMedia = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteMedia = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { mediaId } = req.params;
   const adminId = req.user.userId;
-  await MediaService.deleteMediaFromDB(adminId, id as string);
+  await MediaService.deleteMediaFromDB(adminId, mediaId as string);
 
   sendResponse(res, status.OK, true, "Media deleted successfully", null);
 });
@@ -105,10 +54,6 @@ const deleteMedia = catchAsync(async (req: Request, res: Response) => {
 export const MediaController = {
   createMedia,
   getAllMedia,
-  getFeaturedMedia,
-  getTrendingMedia,
-  getEditorsPicks,
-  searchMedia,
   getMediaBySlug,
   updateMedia,
   deleteMedia,

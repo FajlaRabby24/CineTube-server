@@ -29,8 +29,8 @@ const getPendingReviews = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getReviewById = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const result = await ReviewService.getReviewByIdFromDB(id as string);
+  const { reviewId } = req.params;
+  const result = await ReviewService.getReviewByIdFromDB(reviewId as string);
 
   sendResponse(res, status.OK, true, "Review retrieved successfully", result);
 });
@@ -83,25 +83,28 @@ const updateReview = catchAsync(async (req: Request, res: Response) => {
 
 const deleteReview = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as IRequestUser;
-  const { id } = req.params;
-  await ReviewService.deleteReviewFromDB(id as string, userId);
+  const { reviewId } = req.params;
+  await ReviewService.deleteReviewFromDB(reviewId as string, userId);
 
   sendResponse(res, status.OK, true, "Review deleted successfully", null);
 });
 
 const approveReview = catchAsync(async (req: Request, res: Response) => {
+  const { reviewId } = req.params;
   const { userId: adminId } = req.user as IRequestUser;
-  const { id } = req.params;
-  const result = await ReviewService.approveReviewIntoDB(id as string, adminId);
+  const result = await ReviewService.approveReviewIntoDB(
+    reviewId as string,
+    adminId,
+  );
 
   sendResponse(res, status.OK, true, "Review approved successfully", result);
 });
 
 const rejectReview = catchAsync(async (req: Request, res: Response) => {
+  const { reviewId } = req.params;
   const { userId: adminId } = req.user as IRequestUser;
-  const { id } = req.params;
   const result = await ReviewService.rejectReviewIntoDB(
-    id as string,
+    reviewId as string,
     adminId,
     req.body,
   );
@@ -110,11 +113,20 @@ const rejectReview = catchAsync(async (req: Request, res: Response) => {
 });
 
 const likeReview = catchAsync(async (req: Request, res: Response) => {
+  const { reviewId } = req.params;
   const { userId } = req.user as IRequestUser;
-  const { id } = req.params;
-  const result = await ReviewService.toggleLikeReviewIntoDB(id as string, userId);
+  const result = await ReviewService.toggleLikeReviewIntoDB(
+    reviewId as string,
+    userId,
+  );
 
-  sendResponse(res, status.OK, true, result.liked ? "Review liked" : "Review unliked", result);
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    result.liked ? "Review liked" : "Review unliked",
+    result,
+  );
 });
 
 export const ReviewController = {

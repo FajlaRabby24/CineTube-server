@@ -2,10 +2,14 @@ model Report {
   id          String           @id @default(cuid())
   userId      String // user who filed the report
   targetType  ReportTargetType // REVIEW or COMMENT
-  targetId    String // reviewId or commentId (polymorphic)
+  targetId    String // reviewId or commentId (polymorphic reference)
   reason      ReportReason
   description String? // optional extra detail from reporter
   status      ReportStatus     @default(PENDING)
+
+  // Foreign keys
+  reviewId  String?
+  commentId String?
 
   // Admin resolution
   resolvedBy String? // admin userId
@@ -17,8 +21,8 @@ model Report {
 
   // Relations
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  review  Review?  @relation(fields: [targetId], references: [id], onDelete: Cascade, map: "report_review_fk")
-  comment Comment? @relation(fields: [targetId], references: [id], onDelete: Cascade, map: "report_comment_fk")
+  review  Review?  @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@index([targetType, targetId])
   @@index([status])

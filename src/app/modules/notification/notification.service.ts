@@ -1,13 +1,28 @@
 import status from "http-status";
-import { Prisma } from "../../../generated/prisma/client";
+import { Notification, Prisma, NotificationType } from "../../../generated/prisma/client";
 import AppError from "../../errorhandlers/AppError.js";
 import { IQueryParams } from "../../interfaces/query.interface.js";
 import { prisma } from "../../lib/prisma.js";
 import { QueryBuilder } from "../../utils/QueryBuilder.js";
 
-const getUserNotificationsFromDB = async (userId: string, query: IQueryParams) => {
+interface CreateNotificationPayload {
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  link?: string;
+}
+
+const createNotificationIntoDB = async (data: CreateNotificationPayload) => {
+  return await prisma.notification.create({ data });
+};
+
+const getUserNotificationsFromDB = async (
+  userId: string,
+  query: IQueryParams,
+) => {
   const notificationQuery = new QueryBuilder<
-    Prisma.NotificationWhereInput,
+    Notification,
     Prisma.NotificationWhereInput,
     Prisma.NotificationInclude
   >(prisma.notification, query, {
@@ -29,9 +44,9 @@ const markAllAsReadFromDB = async (userId: string) => {
   });
 };
 
-const markAsReadFromDB = async (id: string, userId: string) => {
+const markAsReadFromDB = async (userId: string, notificationId: string) => {
   const notification = await prisma.notification.findUnique({
-    where: { id },
+    where: { id: notificationId },
   });
 
   if (!notification) {
@@ -39,11 +54,14 @@ const markAsReadFromDB = async (id: string, userId: string) => {
   }
 
   if (notification.userId !== userId) {
-    throw new AppError(status.FORBIDDEN, "You can only read your own notifications");
+    throw new AppError(
+      status.FORBIDDEN,
+      "You can only read your own notifications",
+    );
   }
 
   const result = await prisma.notification.update({
-    where: { id },
+    where: { id: notificationId },
     data: { isRead: true },
   });
 
@@ -51,6 +69,7 @@ const markAsReadFromDB = async (id: string, userId: string) => {
 };
 
 export const NotificationService = {
+  createNotificationIntoDB,
   getUserNotificationsFromDB,
   markAllAsReadFromDB,
   markAsReadFromDB,

@@ -1,18 +1,21 @@
 import status from "http-status";
-import { ReportReason, ReportStatus, ReportTargetType } from "../../../generated/prisma/client";
+import {
+  NotificationType,
+  Prisma,
+  Report,
+  ReportStatus,
+  ReportTargetType,
+  ReviewStatus,
+} from "../../../generated/prisma/client";
 import AppError from "../../errorhandlers/AppError.js";
 import { IQueryParams } from "../../interfaces/query.interface.js";
 import { prisma } from "../../lib/prisma.js";
 import { QueryBuilder } from "../../utils/QueryBuilder.js";
+import { ICreateReportPaylod } from "./report.types";
 
 const createReportIntoDB = async (
   userId: string,
-  payload: {
-    targetType: ReportTargetType;
-    targetId: string;
-    reason: ReportReason;
-    description?: string;
-  },
+  payload: ICreateReportPaylod,
 ) => {
   if (payload.targetType === ReportTargetType.REVIEW) {
     const review = await prisma.review.findUnique({
@@ -40,17 +43,28 @@ const createReportIntoDB = async (
   });
 
   if (existingReport) {
-    throw new AppError(status.BAD_REQUEST, "You have already reported this content");
+    throw new AppError(
+      status.BAD_REQUEST,
+      "You have already reported this content",
+    );
+  }
+
+  const reportData: any = {
+    user: { connect: { id: userId } },
+    targetType: payload.targetType,
+    targetId: payload.targetId,
+    reason: payload.reason,
+    description: payload.description ?? null,
+  };
+
+  if (payload.targetType === ReportTargetType.REVIEW) {
+    reportData.review = { connect: { id: payload.targetId } };
+  } else if (payload.targetType === ReportTargetType.COMMENT) {
+    reportData.comment = { connect: { id: payload.targetId } };
   }
 
   const result = await prisma.report.create({
-    data: {
-      userId,
-      targetType: payload.targetType,
-      targetId: payload.targetId,
-      reason: payload.reason,
-      description: payload.description ?? null,
-    },
+    data: reportData,
     include: {
       user: {
         select: {
@@ -67,9 +81,9 @@ const createReportIntoDB = async (
 
 const getPendingReportsFromDB = async (query: IQueryParams) => {
   const reportQuery = new QueryBuilder<
-    any,
-    any,
-    any
+    Report,
+    Prisma.ReportWhereInput,
+    Prisma.ReportInclude
   >(prisma.report, query, {
     searchableFields: [],
     filterableFields: ["targetType", "reason"],
@@ -116,11 +130,11 @@ const getPendingReportsFromDB = async (query: IQueryParams) => {
 };
 
 const resolveReportFromDB = async (
-  id: string,
   adminId: string,
+  reportId: string,
   resolution: string,
 ) => {
-  const report = await prisma.report.findUnique({ where: { id } });
+  const report = await prisma.report.findUnique({ where: { id: reportId } });
 
   if (!report) {
     throw new AppError(status.NOT_FOUND, "Report not found");
@@ -132,7 +146,7 @@ const resolveReportFromDB = async (
 
   const result = await prisma.$transaction(async (tx) => {
     const updatedReport = await tx.report.update({
-      where: { id },
+      where: { id: reportId },
       data: {
         status: ReportStatus.RESOLVED,
         resolvedBy: adminId,
@@ -144,7 +158,7 @@ const resolveReportFromDB = async (
     if (report.targetType === ReportTargetType.REVIEW) {
       await tx.review.update({
         where: { id: report.targetId },
-        data: { status: "REJECTED" },
+        data: { status: ReviewStatus.REJECTED },
       });
     } else if (report.targetType === ReportTargetType.COMMENT) {
       await tx.comment.delete({
@@ -152,14 +166,23 @@ const resolveReportFromDB = async (
       });
     }
 
+    await tx.notification.create({
+      data: {
+        userId: report.userId,
+        type: NotificationType.REPORT_RESOLVED,
+        title: "Your Report has been Resolved",
+        message: `Your report has been resolved. Resolution: ${resolution}`,
+      },
+    });
+
     return updatedReport;
   });
 
   return result;
 };
 
-const dismissReportFromDB = async (id: string, adminId: string) => {
-  const report = await prisma.report.findUnique({ where: { id } });
+const dismissReportFromDB = async (adminId: string, reportId: string) => {
+  const report = await prisma.report.findUnique({ where: { id: reportId } });
 
   if (!report) {
     throw new AppError(status.NOT_FOUND, "Report not found");
@@ -170,7 +193,7 @@ const dismissReportFromDB = async (id: string, adminId: string) => {
   }
 
   const result = await prisma.report.update({
-    where: { id },
+    where: { id: reportId },
     data: {
       status: ReportStatus.DISMISSED,
       resolvedBy: adminId,

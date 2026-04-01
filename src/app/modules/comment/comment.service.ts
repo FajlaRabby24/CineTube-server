@@ -1,5 +1,5 @@
 import status from "http-status";
-import { Prisma } from "../../../generated/prisma/client";
+import { NotificationType, Prisma } from "../../../generated/prisma/client";
 import { Role } from "../../../generated/prisma/enums";
 import AppError from "../../errorhandlers/AppError";
 import { prisma } from "../../lib/prisma";
@@ -20,6 +20,7 @@ const commentInclude = {
     },
   },
   replies: {
+    where: { isDeleted: false },
     include: {
       user: {
         select: {
@@ -50,7 +51,9 @@ interface CommentData {
   };
 }
 
-const getCommentsByReviewFromDB = async (reviewId: string): Promise<CommentData> => {
+const getCommentsByReviewFromDB = async (
+  reviewId: string,
+): Promise<CommentData> => {
   const review = await prisma.review.findUnique({ where: { id: reviewId } });
   if (!review) {
     throw new AppError(status.NOT_FOUND, "Review not found");
@@ -96,6 +99,18 @@ const createCommentIntoDB = async (
     data: { commentsCount: { increment: 1 } },
   });
 
+  if (review.userId !== userId) {
+    await prisma.notification.create({
+      data: {
+        userId: review.userId,
+        type: NotificationType.COMMENT_RECEIVED,
+        title: "New Comment on Your Review",
+        message: `Someone commented on your review`,
+        link: `/reviews/${reviewId}`,
+      },
+    });
+  }
+
   return comment;
 };
 
@@ -135,12 +150,24 @@ const createReplyIntoDB = async (
     data: { commentsCount: { increment: 1 } },
   });
 
+  if (parentComment.userId !== userId) {
+    await prisma.notification.create({
+      data: {
+        userId: parentComment.userId,
+        type: NotificationType.COMMENT_REPLIED,
+        title: "New Reply on Your Comment",
+        message: `Someone replied to your comment`,
+        link: `/reviews/${parentComment.reviewId}`,
+      },
+    });
+  }
+
   return comment;
 };
 
 const updateCommentIntoDB = async (
-  commentId: string,
   userId: string,
+  commentId: string,
   content: string,
 ) => {
   const comment = await prisma.comment.findUnique({ where: { id: commentId } });
@@ -169,7 +196,12 @@ const deleteCommentIntoDB = async (
 ) => {
   const comment = await prisma.comment.findUnique({
     where: { id: commentId },
-    include: { _count: { select: { replies: true } } },
+    include: {
+      replies: {
+        where: { isDeleted: false },
+        select: { id: true },
+      },
+    },
   });
 
   if (!comment || comment.isDeleted) {
@@ -186,22 +218,36 @@ const deleteCommentIntoDB = async (
     );
   }
 
-  if (comment._count.replies > 0) {
-    await prisma.comment.update({
-      where: { id: commentId },
-      data: { isDeleted: true },
-    });
-  } else {
-    await prisma.comment.delete({ where: { id: commentId } });
-  }
+  const activeRepliesCount = comment.replies.length;
+  const totalToDelete = 1 + activeRepliesCount;
+  console.log({ activeRepliesCount, totalToDelete });
 
-  await prisma.review.update({
-    where: { id: comment.reviewId },
-    data: { commentsCount: { decrement: 1 } },
+  await prisma.$transaction(async (tx) => {
+    if (activeRepliesCount > 0) {
+      // Soft delete parent and its active replies
+      await tx.comment.update({
+        where: { id: commentId },
+        data: { isDeleted: true },
+      });
+
+      await tx.comment.updateMany({
+        where: { parentId: commentId, isDeleted: false },
+        data: { isDeleted: true },
+      });
+    } else {
+      // Hard delete if no active replies
+      await tx.comment.delete({ where: { id: commentId } });
+    }
+
+    // Atomic decrement of all hidden/deleted comments
+    await tx.review.update({
+      where: { id: comment.reviewId },
+      data: { commentsCount: { decrement: totalToDelete } },
+    });
   });
 };
 
-const toggleLikeCommentIntoDB = async (commentId: string, userId: string) => {
+const toggleLikeCommentIntoDB = async (userId: string, commentId: string) => {
   const comment = await prisma.comment.findUnique({ where: { id: commentId } });
 
   if (!comment || comment.isDeleted) {

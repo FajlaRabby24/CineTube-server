@@ -30,6 +30,7 @@ const createAdminIntoDB = async (payload: IAdminCreatePayload) => {
       name,
       email,
       password,
+      role: Role.ADMIN,
     },
   });
 
@@ -40,36 +41,44 @@ const createAdminIntoDB = async (payload: IAdminCreatePayload) => {
     );
   }
 
-  const result = await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: { id: userData.user.id },
-      data: { 
-        role: Role.ADMIN,
-        emailVerified: true,
-      },
-    });
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userData.user.id },
+        data: {
+          emailVerified: true,
+        },
+      });
 
-    const admin = await tx.admin.create({
-      data: {
-        userId: userData.user.id,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-            isActive: true,
+      const admin = await tx.admin.create({
+        data: {
+          userId: userData.user.id,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              isActive: true,
+            },
           },
         },
-      },
+      });
+
+      return admin;
     });
 
-    return admin;
-  });
-
-  return result;
+    return result;
+  } catch (error) {
+    await prisma.user.delete({
+      where: {
+        id: userData.user.id,
+      },
+    });
+    throw error;
+  }
 };
 
 const getDashboardStats = async () => {
@@ -144,6 +153,28 @@ const getAllUsers = async (query: Record<string, any>) => {
   })
     .search()
     .filter()
+    .where({
+      role: { notIn: [Role.ADMIN, Role.SUPER_ADMIN] },
+    })
+    .sort()
+    .paginate()
+    .include({
+      subscription: true,
+    });
+
+  return await userQuery.execute();
+};
+
+const getAllAdmins = async (query: Record<string, any>) => {
+  const userQuery = new QueryBuilder(prisma.user, query, {
+    searchableFields: ["name", "email", "phoneNumber"],
+    filterableFields: ["role", "isActive", "isBanned"],
+  })
+    .search()
+    .filter()
+    .where({
+      role: { not: Role.USER },
+    })
     .sort()
     .paginate()
     .include({
@@ -170,8 +201,11 @@ const banUnbanUser = async (
     const updatedUser = await tx.user.update({
       where: { id: userId },
       data: {
+        isActive: !payload.isBanned,
         isBanned: payload.isBanned,
-        bannedReason: payload.isBanned ? (payload.bannedReason ?? null) : null,
+        bannedReason: payload.isBanned
+          ? (payload.bannedReason ?? "Not specified")
+          : null,
         bannedAt: payload.isBanned ? new Date() : null,
       },
     });
@@ -249,6 +283,7 @@ const getPaymentAnalytics = async (query: Record<string, any>) => {
   return { ...result, stats };
 };
 
+// TODO: check this route after payment is implemented
 const refundPayment = async (
   adminId: string,
   paymentId: string,
@@ -311,4 +346,5 @@ export const AdminService = {
   getAuditLogs,
   getPaymentAnalytics,
   refundPayment,
+  getAllAdmins,
 };

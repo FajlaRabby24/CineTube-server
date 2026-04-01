@@ -1,5 +1,4 @@
 import status from "http-status";
-import { Prisma } from "../../../generated/prisma/client";
 import AppError from "../../errorhandlers/AppError.js";
 import { prisma } from "../../lib/prisma.js";
 
@@ -37,14 +36,14 @@ const createTagIntoDB = async (payload: { name: string; slug: string }) => {
   return result;
 };
 
-const deleteTagFromDB = async (id: string) => {
-  const tag = await prisma.tag.findUnique({ where: { id } });
+const deleteTagFromDB = async (tagId: string) => {
+  const tag = await prisma.tag.findUnique({ where: { id: tagId } });
 
   if (!tag) {
     throw new AppError(status.NOT_FOUND, "Tag not found");
   }
 
-  await prisma.tag.delete({ where: { id } });
+  await prisma.tag.delete({ where: { id: tagId } });
 };
 
 export const TagService = {

@@ -17,8 +17,8 @@ const createTag = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteTag = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  await TagService.deleteTagFromDB(id as string);
+  const { tagId } = req.params;
+  await TagService.deleteTagFromDB(tagId as string);
 
   sendResponse(res, status.OK, true, "Tag deleted successfully", null);
 });

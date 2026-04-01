@@ -8,30 +8,46 @@ import { ReportService } from "./report.service.js";
 
 const createReport = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as IRequestUser;
-  const result = await ReportService.createReportIntoDB(userId, req.body);
+  const payload = req.body;
+  const result = await ReportService.createReportIntoDB(userId, payload);
 
-  sendResponse(res, status.CREATED, true, "Report submitted successfully", result);
+  sendResponse(
+    res,
+    status.CREATED,
+    true,
+    "Report submitted successfully",
+    result,
+  );
 });
 
 const getPendingReports = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReportService.getPendingReportsFromDB(req.query as IQueryParams);
+  const result = await ReportService.getPendingReportsFromDB(
+    req.query as IQueryParams,
+  );
 
   sendResponse(res, status.OK, true, "Reports retrieved successfully", result);
 });
 
 const resolveReport = catchAsync(async (req: Request, res: Response) => {
   const { userId: adminId } = req.user as IRequestUser;
-  const { id } = req.params;
+  const { reportId } = req.params;
   const { resolution } = req.body;
-  const result = await ReportService.resolveReportFromDB(id as string, adminId, resolution);
+  const result = await ReportService.resolveReportFromDB(
+    adminId,
+    reportId as string,
+    resolution,
+  );
 
   sendResponse(res, status.OK, true, "Report resolved successfully", result);
 });
 
 const dismissReport = catchAsync(async (req: Request, res: Response) => {
   const { userId: adminId } = req.user as IRequestUser;
-  const { id } = req.params;
-  const result = await ReportService.dismissReportFromDB(id as string, adminId);
+  const { reportId } = req.params;
+  const result = await ReportService.dismissReportFromDB(
+    adminId,
+    reportId as string,
+  );
 
   sendResponse(res, status.OK, true, "Report dismissed successfully", result);
 });

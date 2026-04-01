@@ -15,7 +15,7 @@ app.use(helmet());
 
 app.use("/api/auth/", toNodeHandler(auth));
 
-app.use("/api/v1/webhook", express.raw({ type: "application/json" }));
+// app.use("/api/v1/webhook", express.raw({ type: "application/json" }));
 
 app.use(express.urlencoded({ extended: true }));
 

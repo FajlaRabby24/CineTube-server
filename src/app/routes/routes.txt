@@ -82,3 +82,5 @@ PATCH   /api/v1/admin/users/:id/ban           User ban/unban করো          
 GET     /api/v1/admin/audit-log               Admin audit log আনো                              Admin
 GET     /api/v1/admin/payments                সব payment analytics                             Admin
 POST    /api/v1/admin/payments/:id/refund     Payment refund করো                               Admin
+
+

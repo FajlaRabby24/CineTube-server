@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import status from "http-status";
-import Stripe from "stripe";
+import { envVars } from "../../config/env.js";
+import { stripe } from "../../config/stripe.config.js";
 import { IRequestUser } from "../../interfaces/requestUser.interface.js";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
@@ -36,11 +37,15 @@ const cancelSubscription = catchAsync(async (req: Request, res: Response) => {
 
 const handleWebhook = catchAsync(async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"] as string;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+  const webhookSecret = envVars.STRIPE_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    throw new Error("STRIPE_WEBHOOK_SECRET is not set");
+  }
 
   let event;
   try {
-    event = Stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
     throw new Error(`Webhook Error: ${err}`);
   }

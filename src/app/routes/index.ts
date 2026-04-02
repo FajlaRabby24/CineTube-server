@@ -11,6 +11,7 @@ import { ReviewRoutes } from "../modules/review/review.route";
 import { SubscriptionRoutes } from "../modules/subscription/subscription.route";
 import { TagRoutes } from "../modules/tag/tag.route";
 import { WatchlistRoutes } from "../modules/watchlist/watchlist.route";
+import { WebhookRoutes } from "../modules/webhook/webhook.route";
 
 const router = Router();
 
@@ -26,6 +27,6 @@ router.use("/notifications", NotificationRoutes);
 router.use("/payments", PaymentRoutes);
 router.use("/pricing", PricingRoutes);
 router.use("/subscriptions", SubscriptionRoutes);
-// router.use("/webhook", WebhookRoutes);
+router.use("/webhook", WebhookRoutes);
 
 export const indexRoute = router;

@@ -8,6 +8,7 @@ import { auth } from "./app/lib/auth";
 import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { indexRoute } from "./app/routes";
+import { WebhookRoutes } from "./app/modules/webhook/webhook.route";
 
 const app: Application = express();
 
@@ -15,13 +16,11 @@ app.use(helmet());
 
 app.use("/api/auth/", toNodeHandler(auth));
 
+// Stripe Webhook must be BEFORE express.json() to get the raw body
 app.use(
   "/api/v1/webhook",
   express.raw({ type: "application/json" }),
-  async (req: Request, res: Response) => {
-    console.log("webhook recevied", req.body);
-    res.status(200).send("ok");
-  },
+  WebhookRoutes,
 );
 
 app.use(express.urlencoded({ extended: true }));

@@ -3,6 +3,6 @@ import { SubscriptionController } from "../subscription/subscription.controller"
 
 const router = Router();
 
-router.post("/stripe", SubscriptionController.handleWebhook);
+router.post("/", SubscriptionController.handleWebhook);
 
 export const WebhookRoutes = router;

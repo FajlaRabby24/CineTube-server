@@ -9,9 +9,7 @@ import { envVars } from "../../config/env.js";
 import AppError from "../../errorhandlers/AppError.js";
 import { prisma } from "../../lib/prisma.js";
 
-export const stripe = new Stripe(envVars.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-03-25.dahlia",
-});
+import { stripe } from "../../config/stripe.config.js";
 
 const getUserSubscriptionFromDB = async (userId: string) => {
   const subscription = await prisma.subscription.findUnique({
@@ -138,12 +136,7 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
       const stripeSubResponse = await stripe.subscriptions.retrieve(
         session.subscription as string,
       );
-      const stripeSubscriptionData = stripeSubResponse as unknown as {
-        id: string;
-        items: { data: Array<{ price: { id: string } }> };
-        current_period_start: number;
-        current_period_end: number;
-      };
+      const stripeSubscriptionData = stripeSubResponse as any;
 
       const priceId = stripeSubscriptionData.items.data[0]?.price.id;
 
@@ -179,6 +172,28 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             description: `${plan} subscription`,
           },
         });
+      });
+      break;
+    }
+
+    case "customer.subscription.updated": {
+      const stripeSubscription = event.data.object as any;
+      const periodStart = new Date(
+        stripeSubscription.current_period_start * 1000,
+      );
+      const periodEnd = new Date(stripeSubscription.current_period_end * 1000);
+
+      await prisma.subscription.updateMany({
+        where: { stripeSubscriptionId: stripeSubscription.id },
+        data: {
+          currentPeriodStart: periodStart,
+          currentPeriodEnd: periodEnd,
+          status:
+            stripeSubscription.status === "active"
+              ? SubscriptionStatus.ACTIVE
+              : SubscriptionStatus.PAST_DUE,
+          cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
+        },
       });
       break;
     }

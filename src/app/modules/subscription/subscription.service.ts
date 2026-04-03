@@ -1,4 +1,4 @@
-import status from "http-status";
+import httpStatus from "http-status";
 import Stripe from "stripe";
 import {
   PaymentStatus,
@@ -29,7 +29,7 @@ const createCheckoutSession = async (
   plan: SubscriptionPlan,
 ) => {
   if (plan === SubscriptionPlan.FREE) {
-    throw new AppError(status.BAD_REQUEST, "Cannot checkout for FREE plan");
+    throw new AppError(httpStatus.BAD_REQUEST, "Cannot checkout for FREE plan");
   }
 
   const pricingPlan = await prisma.pricingPlan.findUnique({
@@ -37,7 +37,7 @@ const createCheckoutSession = async (
   });
 
   if (!pricingPlan || !pricingPlan.stripePriceId) {
-    throw new AppError(status.NOT_FOUND, "Pricing plan not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Pricing plan not found");
   }
 
   let subscription = await prisma.subscription.findUnique({
@@ -49,7 +49,7 @@ const createCheckoutSession = async (
   if (!customerId) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user || !user.email) {
-      throw new AppError(status.BAD_REQUEST, "User email not found");
+      throw new AppError(httpStatus.BAD_REQUEST, "User email not found");
     }
 
     const customer = await stripe.customers.create({
@@ -90,6 +90,9 @@ const createCheckoutSession = async (
     success_url: `${envVars.FRONTEND_URL}/subscription/success`,
     cancel_url: `${envVars.FRONTEND_URL}/subscription/cancel`,
     metadata: { userId, plan },
+    subscription_data: {
+      metadata: { userId, plan },
+    },
   });
 
   return { sessionId: session.id, paymentUrl: session.url };
@@ -101,7 +104,7 @@ const cancelSubscription = async (userId: string) => {
   });
 
   if (!subscription?.stripeSubscriptionId) {
-    throw new AppError(status.NOT_FOUND, "Subscription not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Subscription not found");
   }
 
   const stripeSubscription = await stripe.subscriptions.retrieve(
@@ -109,7 +112,17 @@ const cancelSubscription = async (userId: string) => {
   );
 
   if (stripeSubscription.status === "canceled") {
-    throw new AppError(status.BAD_REQUEST, "Subscription already cancelled");
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Subscription already cancelled",
+    );
+  }
+
+  if (stripeSubscription.cancel_at_period_end) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Subscription is already set to cancel at period end",
+    );
   }
 
   await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
@@ -129,91 +142,243 @@ const cancelSubscription = async (userId: string) => {
 };
 
 const handleWebhookEvent = async (event: Stripe.Event) => {
-  const existingSubscription = await prisma.subscription.findUnique({
-    where: {
-      userId: (event.data.object as Stripe.Checkout.Session).metadata?.userId!,
-    },
-  });
-
-  if (existingSubscription) {
-    console.log(`Event ${event.id} already processed. Skipping`);
-    return { message: `Event ${event.id} already processed. Skipping` };
-  }
-
   switch (event.type) {
     case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.userId;
-      const plan = session.metadata?.plan as SubscriptionPlan;
+      try {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
+        const plan = session.metadata?.plan as SubscriptionPlan;
 
-      if (!userId || !plan) break;
+        if (!userId || !plan) break;
 
-      const stripeSubResponse = await stripe.subscriptions.retrieve(
-        session.subscription as string,
-      );
-      const stripeSubscriptionData = stripeSubResponse as unknown as {
-        id: string;
-        items: { data: Array<{ price: { id: string } }> };
-        current_period_start: number;
-        current_period_end: number;
-      };
-
-      const priceId = stripeSubscriptionData.items.data[0]?.price.id;
-
-      const periodStart = new Date(
-        stripeSubscriptionData.current_period_start * 1000,
-      );
-      const periodEnd = new Date(
-        stripeSubscriptionData.current_period_end * 1000,
-      );
-
-      await prisma.$transaction(async (tx) => {
-        await tx.subscription.update({
-          where: { userId },
-          data: {
-            plan,
-            status: SubscriptionStatus.ACTIVE,
-            stripeSubscriptionId: stripeSubscriptionData.id,
-            stripePriceId: priceId ?? null,
-            currentPeriodStart: periodStart,
-            currentPeriodEnd: periodEnd,
-            cancelAtPeriodEnd: false,
-          },
+        const alreadyProcessed = await prisma.payment.findUnique({
+          where: { stripePaymentIntentId: session.payment_intent as string },
         });
+        if (alreadyProcessed) {
+          console.log(`Session ${session.id} already processed. Skipping`);
+          break;
+        }
 
-        await tx.payment.create({
-          data: {
-            userId,
-            stripePaymentIntentId: session.payment_intent as string,
-            amount: session.amount_total ? session.amount_total / 100 : 0,
-            currency: session.currency || "usd",
-            status: PaymentStatus.SUCCEEDED,
-            plan,
-            description: `${plan} subscription`,
-          },
+        const subscriptionId = session.subscription as string;
+        if (!subscriptionId) break;
+
+        const stripeSub = (await stripe.subscriptions.retrieve(
+          subscriptionId,
+        )) as unknown as {
+          id: string;
+          items: { data: Array<{ price: { id: string } }> };
+          current_period_start: number;
+          current_period_end: number;
+          cancel_at_period_end: boolean;
+        };
+
+        await prisma.$transaction(async (tx) => {
+          await tx.subscription.update({
+            where: { userId },
+            data: {
+              plan,
+              status: SubscriptionStatus.ACTIVE,
+              stripeSubscriptionId: stripeSub.id,
+              stripePriceId: stripeSub.items.data[0]?.price.id ?? null,
+              currentPeriodStart: new Date(
+                stripeSub.current_period_start * 1000,
+              ),
+              currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+              cancelAtPeriodEnd: false,
+              cancelledAt: null,
+            },
+          });
+
+          await tx.payment.create({
+            data: {
+              userId,
+              stripePaymentIntentId: session.payment_intent as string,
+              amount: session.amount_total ? session.amount_total / 100 : 0,
+              currency: session.currency ?? "usd",
+              status: PaymentStatus.SUCCEEDED,
+              plan,
+              description: `${plan} subscription`,
+            },
+          });
         });
-      });
-      break;
+        break;
+      } catch (error) {
+        console.log(error);
+      }
     }
 
-    case "customer.subscription.deleted": {
-      const stripeSubscription = event.data.object as Stripe.Subscription;
-      await prisma.subscription.updateMany({
-        where: { stripeSubscriptionId: stripeSubscription.id },
-        data: { status: SubscriptionStatus.CANCELLED },
-      });
-      break;
+    case "invoice.payment_succeeded": {
+      try {
+        const invoice = event.data.object as Stripe.Invoice;
+
+        if (invoice.billing_reason === "subscription_create") break;
+
+        const stripeSubscriptionId = (
+          invoice as unknown as { subscription: string }
+        ).subscription;
+        if (!stripeSubscriptionId) break;
+
+        const alreadyProcessed = await prisma.payment.findFirst({
+          where: { stripeInvoiceId: invoice.id },
+        });
+        if (alreadyProcessed) {
+          console.log(`Invoice ${invoice.id} already processed. Skipping`);
+          break;
+        }
+
+        const subscription = await prisma.subscription.findFirst({
+          where: { stripeSubscriptionId },
+        });
+        if (!subscription) break;
+
+        const stripeSub = (await stripe.subscriptions.retrieve(
+          stripeSubscriptionId,
+        )) as unknown as {
+          current_period_start: number;
+          current_period_end: number;
+          cancel_at_period_end: boolean;
+        };
+
+        await prisma.$transaction(async (tx) => {
+          await tx.subscription.update({
+            where: { id: subscription.id },
+            data: {
+              status: SubscriptionStatus.ACTIVE,
+              currentPeriodStart: new Date(
+                stripeSub.current_period_start * 1000,
+              ),
+              currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+              cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+            },
+          });
+
+          await tx.payment.create({
+            data: {
+              userId: subscription.userId,
+              subscriptionId: subscription.id,
+              stripeInvoiceId: invoice.id,
+              amount: invoice.amount_paid / 100,
+              currency: invoice.currency ?? "usd",
+              status: PaymentStatus.SUCCEEDED,
+              plan: subscription.plan,
+              description: `${subscription.plan} subscription renewal`,
+            },
+          });
+        });
+        break;
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     case "invoice.payment_failed": {
-      const invoice = event.data.object as Stripe.Invoice;
-      const customerId = invoice.customer as string;
-      await prisma.subscription.updateMany({
-        where: { stripeCustomerId: customerId },
-        data: { status: SubscriptionStatus.PAST_DUE },
-      });
-      break;
+      try {
+        const invoice = event.data.object as Stripe.Invoice;
+        const stripeSubscriptionId = (
+          invoice as unknown as { subscription: string }
+        ).subscription;
+        if (!stripeSubscriptionId) break;
+
+        const subscription = await prisma.subscription.findFirst({
+          where: { stripeSubscriptionId },
+        });
+        if (!subscription) break;
+
+        await prisma.$transaction(async (tx) => {
+          await tx.subscription.update({
+            where: { id: subscription.id },
+            data: { status: SubscriptionStatus.PAST_DUE },
+          });
+
+          await tx.payment.create({
+            data: {
+              userId: subscription.userId,
+              subscriptionId: subscription.id,
+              stripeInvoiceId: invoice.id,
+              amount: invoice.amount_due / 100,
+              currency: invoice.currency ?? "usd",
+              status: PaymentStatus.FAILED,
+              plan: subscription.plan,
+              description: `${subscription.plan} payment failed`,
+            },
+          });
+        });
+        break;
+      } catch (error) {
+        console.log(error);
+      }
     }
+
+    case "customer.subscription.updated": {
+      try {
+        const stripeSub = event.data.object as unknown as {
+          id: string;
+          status: string;
+          current_period_start: number;
+          current_period_end: number;
+          cancel_at_period_end: boolean;
+          canceled_at: number | null;
+        };
+
+        const subscription = await prisma.subscription.findFirst({
+          where: { stripeSubscriptionId: stripeSub.id },
+        });
+        if (!subscription) break;
+
+        let newStatus: SubscriptionStatus;
+        switch (stripeSub.status) {
+          case "active":
+            newStatus = SubscriptionStatus.ACTIVE;
+            break;
+          case "past_due":
+            newStatus = SubscriptionStatus.PAST_DUE;
+            break;
+          case "canceled":
+            newStatus = SubscriptionStatus.CANCELLED;
+            break;
+          default:
+            newStatus = SubscriptionStatus.ACTIVE;
+        }
+
+        await prisma.subscription.update({
+          where: { id: subscription.id },
+          data: {
+            status: newStatus,
+            currentPeriodStart: new Date(stripeSub.current_period_start * 1000),
+            currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+            cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+            cancelledAt: stripeSub.canceled_at
+              ? new Date(stripeSub.canceled_at * 1000)
+              : null,
+          },
+        });
+        break;
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    case "customer.subscription.deleted": {
+      try {
+        const stripeSub = event.data.object as unknown as { id: string };
+
+        await prisma.subscription.updateMany({
+          where: { stripeSubscriptionId: stripeSub.id },
+          data: {
+            status: SubscriptionStatus.CANCELLED,
+            cancelAtPeriodEnd: false,
+            cancelledAt: new Date(),
+            plan: SubscriptionPlan.FREE,
+          },
+        });
+        break;
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    default:
+      console.log(`Unhandled event type: ${event.type}`);
   }
 };
 

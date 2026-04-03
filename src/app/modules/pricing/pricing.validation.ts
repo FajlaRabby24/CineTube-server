@@ -1,4 +1,15 @@
 import { z } from "zod";
+import { SubscriptionPlan } from "../../../generated/prisma/enums";
+
+const createPricingPlanSchema = z.object({
+  name: z.string().min(1).max(100),
+  plan: z.nativeEnum(SubscriptionPlan),
+  price: z.number().min(0),
+  currency: z.string().default("usd"),
+  features: z.array(z.string()),
+  isActive: z.boolean().default(true),
+  isPopular: z.boolean().default(false),
+});
 
 const updatePricingPlanSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -10,5 +21,6 @@ const updatePricingPlanSchema = z.object({
 });
 
 export const PricingValidation = {
+  createPricingPlanSchema,
   updatePricingPlanSchema,
 };

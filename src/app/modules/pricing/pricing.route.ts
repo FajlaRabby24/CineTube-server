@@ -9,6 +9,13 @@ const router = Router();
 
 router.get("/", PricingController.getAllPricingPlans);
 
+router.post(
+  "/",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  validateRequest(PricingValidation.createPricingPlanSchema),
+  PricingController.createPricingPlan,
+);
+
 router.patch(
   "/:pricingId",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),

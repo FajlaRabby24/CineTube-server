@@ -6,8 +6,6 @@ import { envVars } from "../config/env";
 import { sendEmail } from "../utils/email";
 import { prisma } from "./prisma";
 
-const isProduction = envVars.NODE_ENV === "production";
-
 export const auth = betterAuth({
   baseURL: envVars.BETTER_AUTH_URL,
   secret: envVars.BETTER_AUTH_SECRET,
@@ -16,21 +14,21 @@ export const auth = betterAuth({
   }),
   trustedOrigins: [envVars.FRONTEND_URL, envVars.BETTER_AUTH_URL],
   advanced: {
-    disableCSRFCheck: true,
-    useSecureCookies: isProduction,
+    // disableCSRFCheck: true,
+    useSecureCookies: false,
     cookies: {
       state: {
         attributes: {
-          sameSite: isProduction ? "strict" : "lax",
-          secure: isProduction,
+          sameSite: "none",
+          secure: true,
           httpOnly: true,
           path: "/",
         },
       },
       sessionToken: {
         attributes: {
-          sameSite: isProduction ? "strict" : "lax",
-          secure: isProduction,
+          sameSite: "none",
+          secure: true,
           httpOnly: true,
           path: "/",
         },
@@ -40,6 +38,22 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+  },
+  socialProviders: {
+    google: {
+      clientId: envVars.GOOGLE_CLIENT_ID,
+      clientSecret: envVars.GOOGLE_CLIENT_SECRET,
+
+      mapProfileToUser: () => {
+        return {
+          role: Role.USER,
+          isActive: true,
+          isBanned: false,
+          needPasswordChange: false,
+          emailVerified: true,
+        };
+      },
+    },
   },
   emailVerification: {
     sendOnSignIn: true,

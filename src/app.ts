@@ -19,6 +19,8 @@ app.set("query parser", (str: string) => qs.parse(str));
 app.set("view engine", "ejs");
 app.set("views", path.resolve(process.cwd(), `src/app/templates`));
 
+app.use(express.static(path.join(process.cwd(), "src/app/public")));
+
 // 1. Security middleware সবার আগে
 app.use(helmet());
 app.use(
@@ -31,7 +33,7 @@ app.use(
 );
 
 // 2. Better Auth
-app.use("/api/auth/", toNodeHandler(auth));
+app.use("/api/auth/*splate", toNodeHandler(auth));
 
 // 3. Webhook — raw body, rate limiter নেই
 app.use(

@@ -9,7 +9,7 @@ const router = Router();
 router.get("/", checkAuth(), SubscriptionController.getUserSubscription);
 
 router.post(
-  "/checkout",
+  "/create-checkout-session",
   checkAuth(),
   validateRequest(SubscriptionValidation.checkoutSchema),
   SubscriptionController.createCheckout,

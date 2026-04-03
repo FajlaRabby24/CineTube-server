@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import status from "http-status";
-import { envVars } from "../../config/env.js";
-import { stripe } from "../../config/stripe.config.js";
+import Stripe from "stripe";
+import { SubscriptionPlan } from "../../../generated/prisma/client";
 import { IRequestUser } from "../../interfaces/requestUser.interface.js";
 import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
@@ -22,7 +22,7 @@ const getUserSubscription = catchAsync(async (req: Request, res: Response) => {
 
 const createCheckout = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as IRequestUser;
-  const { plan } = req.body;
+  const { plan } = req.body as { plan: SubscriptionPlan };
   const result = await SubscriptionService.createCheckoutSession(userId, plan);
 
   sendResponse(res, status.OK, true, "Checkout session created", result);
@@ -37,15 +37,11 @@ const cancelSubscription = catchAsync(async (req: Request, res: Response) => {
 
 const handleWebhook = catchAsync(async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"] as string;
-  const webhookSecret = envVars.STRIPE_WEBHOOK_SECRET;
-
-  if (!webhookSecret) {
-    throw new Error("STRIPE_WEBHOOK_SECRET is not set");
-  }
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    event = Stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
     throw new Error(`Webhook Error: ${err}`);
   }

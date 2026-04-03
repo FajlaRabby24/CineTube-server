@@ -6,10 +6,9 @@ import {
   SubscriptionStatus,
 } from "../../../generated/prisma/client";
 import { envVars } from "../../config/env.js";
+import { stripe } from "../../config/stripe.config";
 import AppError from "../../errorhandlers/AppError.js";
 import { prisma } from "../../lib/prisma.js";
-
-import { stripe } from "../../config/stripe.config.js";
 
 const getUserSubscriptionFromDB = async (userId: string) => {
   const subscription = await prisma.subscription.findUnique({
@@ -72,13 +71,14 @@ const createCheckoutSession = async (
           status: SubscriptionStatus.ACTIVE,
           stripeCustomerId: customerId,
           currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(),
+          currentPeriodEnd: new Date(), // webhook এ overwrite হবে, তাই ঠিক আছে
         },
       });
     }
   }
 
   const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
     customer: customerId,
     mode: "subscription",
     line_items: [
@@ -87,12 +87,12 @@ const createCheckoutSession = async (
         quantity: 1,
       },
     ],
-    success_url: `${envVars.FRONTEND_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${envVars.FRONTEND_URL}/subscription/success`,
     cancel_url: `${envVars.FRONTEND_URL}/subscription/cancel`,
     metadata: { userId, plan },
   });
 
-  return { sessionId: session.id, url: session.url };
+  return { sessionId: session.id, paymentUrl: session.url };
 };
 
 const cancelSubscription = async (userId: string) => {
@@ -118,13 +118,28 @@ const cancelSubscription = async (userId: string) => {
 
   const updated = await prisma.subscription.update({
     where: { userId },
-    data: { cancelAtPeriodEnd: true },
+    data: {
+      cancelAtPeriodEnd: true,
+      cancelledAt: new Date(),
+      status: SubscriptionStatus.CANCELLED,
+    },
   });
 
   return updated;
 };
 
 const handleWebhookEvent = async (event: Stripe.Event) => {
+  const existingSubscription = await prisma.subscription.findUnique({
+    where: {
+      userId: (event.data.object as Stripe.Checkout.Session).metadata?.userId!,
+    },
+  });
+
+  if (existingSubscription) {
+    console.log(`Event ${event.id} already processed. Skipping`);
+    return { message: `Event ${event.id} already processed. Skipping` };
+  }
+
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -136,7 +151,12 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
       const stripeSubResponse = await stripe.subscriptions.retrieve(
         session.subscription as string,
       );
-      const stripeSubscriptionData = stripeSubResponse as any;
+      const stripeSubscriptionData = stripeSubResponse as unknown as {
+        id: string;
+        items: { data: Array<{ price: { id: string } }> };
+        current_period_start: number;
+        current_period_end: number;
+      };
 
       const priceId = stripeSubscriptionData.items.data[0]?.price.id;
 
@@ -172,28 +192,6 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             description: `${plan} subscription`,
           },
         });
-      });
-      break;
-    }
-
-    case "customer.subscription.updated": {
-      const stripeSubscription = event.data.object as any;
-      const periodStart = new Date(
-        stripeSubscription.current_period_start * 1000,
-      );
-      const periodEnd = new Date(stripeSubscription.current_period_end * 1000);
-
-      await prisma.subscription.updateMany({
-        where: { stripeSubscriptionId: stripeSubscription.id },
-        data: {
-          currentPeriodStart: periodStart,
-          currentPeriodEnd: periodEnd,
-          status:
-            stripeSubscription.status === "active"
-              ? SubscriptionStatus.ACTIVE
-              : SubscriptionStatus.PAST_DUE,
-          cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-        },
       });
       break;
     }

@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { SubscriptionController } from "../subscription/subscription.controller";
+import { WebhookController } from "./webhook.controller";
 
 const router = Router();
 
-router.post("/", SubscriptionController.handleWebhook);
+router.post("/", WebhookController.handleWebhook);
 
 export const WebhookRoutes = router;

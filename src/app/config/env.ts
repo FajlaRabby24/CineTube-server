@@ -35,4 +35,6 @@ export const envVars = {
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY as string,
   STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY as string,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET as string,
+  STRIPE_MONTLY_PRODUCT_ID: process.env.STRIPE_MONTLY_PRODUCT_ID as string,
+  STRIPE_YEARLY_PRODUCT_ID: process.env.STRIPE_YEARLY_PRODUCT_ID as string,
 };

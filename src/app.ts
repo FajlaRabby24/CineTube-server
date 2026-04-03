@@ -1,7 +1,7 @@
 import { toNodeHandler } from "better-auth/node";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, { Application, Request, Response } from "express";
+import express, { Application } from "express";
 import helmet from "helmet";
 import { envVars } from "./app/config/env";
 import { auth } from "./app/lib/auth";
@@ -16,7 +16,7 @@ app.use(helmet());
 
 app.use("/api/auth/", toNodeHandler(auth));
 
-// Stripe Webhook must be BEFORE express.json() to get the raw body
+// ১. ওয়েবহুক রাউটকে সবার আগে রাখতে হবে এবং express.raw ব্যবহার করতে হবে
 app.use(
   "/api/v1/webhook",
   express.raw({ type: "application/json" }),
@@ -25,7 +25,9 @@ app.use(
 
 app.use(express.urlencoded({ extended: true }));
 
+// ২. express.json() অবশ্যই ওয়েবহুক রাউটের পরে আসবে
 app.use(express.json());
+
 app.use(cookieParser());
 app.use(
   cors({

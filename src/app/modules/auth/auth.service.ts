@@ -403,6 +403,32 @@ const getSession = async (sessionToken: string) => {
   return session;
 };
 
+const googleLoginSuccess = async (session: Record<string, any>) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      id: session?.user?.id,
+    },
+  });
+
+  if (!isUserExists) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  const tokenInfo = {
+    userId: session?.user?.id,
+    role: session?.user?.role,
+    name: session?.user?.name,
+  };
+
+  const accessToken = tokenUtils.getAccessToken(tokenInfo);
+  const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
+
 export const authService = {
   register,
   login,
@@ -416,4 +442,5 @@ export const authService = {
   getSession,
   profileUpdate,
   getUserSessions,
+  googleLoginSuccess,
 };

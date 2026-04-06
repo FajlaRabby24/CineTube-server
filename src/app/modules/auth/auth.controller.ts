@@ -38,11 +38,16 @@ const login = catchAsync(async (req: Request, res: Response) => {
   tokenUtils.setBetterAuthSessionCookie(res, token);
 
   sendResponse(res, status.OK, true, "User logged in successfully", {
+    token,
+    accessToken,
+    refreshToken,
     id: result.user.id,
     name: result.user.name,
     email: result.user.email,
     image: result.user.image,
-    bio: result.user.bio,
+    role: result.user.role,
+    emailVerified: result.user.emailVerified,
+    needPasswordChange: result.user.needPasswordChange,
   });
 });
 

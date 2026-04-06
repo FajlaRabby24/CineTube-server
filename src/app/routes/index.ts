@@ -8,9 +8,9 @@ import { PaymentRoutes } from "../modules/payment/payment.route";
 import { PricingRoutes } from "../modules/pricing/pricing.route";
 import { ReportRoutes } from "../modules/report/report.route";
 import { ReviewRoutes } from "../modules/review/review.route";
+import { SubscriptionRoutes } from "../modules/subscription/subscription.route";
 import { TagRoutes } from "../modules/tag/tag.route";
 import { WatchlistRoutes } from "../modules/watchlist/watchlist.route";
-import { SubscriptionRoutes } from "../modules/subscription/subscription.route";
 
 const router = Router();
 
@@ -26,5 +26,23 @@ router.use("/notifications", NotificationRoutes);
 router.use("/payments", PaymentRoutes);
 router.use("/pricing", PricingRoutes);
 router.use("/subscriptions", SubscriptionRoutes);
+
+router.post("/validate-file", async (req, res) => {
+  const { name, size, type } = req.body;
+  console.log(req.body, "in valide file route");
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  const maxSize = 2 * 1024 * 1024; // 2MB
+
+  if (!allowedTypes.includes(type)) {
+    return res.json({ ok: false, message: "Only JPG/PNG/WEBP allowed" });
+  }
+
+  if (size > maxSize) {
+    return res.json({ ok: false, message: "File size max 2MB" });
+  }
+
+  return res.json({ ok: true });
+});
 
 export const indexRoute = router;

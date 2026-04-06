@@ -11,6 +11,7 @@ router.post(
   validateRequest(authValidation.registerSchema),
   authController.register,
 );
+
 router.post(
   "/login",
   validateRequest(authValidation.loginSchema),

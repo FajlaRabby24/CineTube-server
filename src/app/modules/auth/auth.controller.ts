@@ -11,20 +11,13 @@ import { authService } from "./auth.service";
 const register = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
 
-  const user = await authService.register(payload);
-
-  const { token, accessToken, refreshToken } = user;
-
-  tokenUtils.setAccessTokenCookie(res, accessToken);
-  tokenUtils.setRefreshTokenCookie(res, refreshToken);
-  tokenUtils.setBetterAuthSessionCookie(res, token as string);
+  await authService.register(payload);
 
   sendResponse(
     res,
     status.CREATED,
     true,
-    "User created successfully. Please check your email to verify your account.",
-    user.user,
+    "Registration successful. Please verify your email.",
   );
 });
 

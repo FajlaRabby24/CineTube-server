@@ -10,13 +10,8 @@ export const registerSchema = z.object({
   password: z
     .string()
     .min(8, "Password must be at least 8 characters long")
-    .max(50, "Password must be at most 50 characters long"),
-  image: z.url("Image must be a valid URL").nullable().optional(),
-  bio: z
-    .string()
-    .max(250, "Bio must be at most 250 characters long")
-    .nullable()
-    .optional(),
+    .max(20, "Password must be at most 20 characters long"),
+  image: z.string().url("Image must be a valid URL").nullable().optional(),
 });
 
 export const loginSchema = z.object({
@@ -24,7 +19,7 @@ export const loginSchema = z.object({
   password: z
     .string()
     .min(8, "Password must be at least 8 characters long")
-    .max(50, "Password must be at most 50 characters long"),
+    .max(20, "Password must be at most 20 characters long"),
 });
 
 export const updateProfileSchema = z.object({

@@ -29,18 +29,18 @@ const register = async (payload: IRegisterPayload) => {
     throw new AppError(400, "User not found");
   }
 
-  const tokenInfo = {
-    userId: data.user.id,
-    role: data.user.role,
-    name: data.user.name,
-    email: data.user.email,
-    image: data.user.image,
-    isBanned: data.user.isBanned,
-    isActive: data.user.isActive,
-  };
+  // const tokenInfo = {
+  //   userId: data.user.id,
+  //   role: data.user.role,
+  //   name: data.user.name,
+  //   email: data.user.email,
+  //   image: data.user.image,
+  //   isBanned: data.user.isBanned,
+  //   isActive: data.user.isActive,
+  // };
 
-  const accessToken = tokenUtils.getAccessToken(tokenInfo);
-  const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
+  // const accessToken = tokenUtils.getAccessToken(tokenInfo);
+  // const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
 
   const user = await prisma.user.findUnique({
     where: {
@@ -53,9 +53,9 @@ const register = async (payload: IRegisterPayload) => {
 
   return {
     token: data.token,
-    user,
-    accessToken,
-    refreshToken,
+    name: user?.name,
+    // accessToken,
+    // refreshToken,
   };
 };
 

@@ -15,6 +15,7 @@ export interface IUpdatePayload {
   name?: string;
   bio?: string;
   image?: string;
+  phoneNumber?: string;
 }
 
 export interface IChangePasswordPayload {

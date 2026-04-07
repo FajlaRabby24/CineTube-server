@@ -315,9 +315,9 @@ const getMe = async (user: IRequestUser) => {
       name: true,
       email: true,
       image: true,
-      bio: true,
       isActive: true,
       isBanned: true,
+      role: true,
     },
   });
 
@@ -372,13 +372,11 @@ const profileUpdate = async (userId: string, payload: IUpdatePayload) => {
   });
 
   const tokenInfo = {
-    userId: result.id,
-    role: result.role,
     name: result.name,
     email: result.email,
+    bio: result.bio,
+    phoneNumber: result.phoneNumber,
     image: result.image,
-    isBanned: result.isBanned as boolean,
-    isActive: result.isActive as boolean,
   };
 
   const accessToken = tokenUtils.getAccessToken(tokenInfo);

@@ -11,7 +11,6 @@ import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { WebhookRoutes } from "./app/modules/webhook/webhook.route";
 import { indexRoute } from "./app/routes";
-import { rateLimiters } from "./app/utils/rateLImit";
 
 const app: Application = express();
 
@@ -47,13 +46,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// TODO: enable after testing
 // 5. Rate limiters — body parse হওয়ার পরে
-app.use(rateLimiters.globalLimiter);
-app.use("/api/v1/auth", rateLimiters.authLimiter);
-app.use(
-  "/api/v1/subscriptions/create-checkout-session",
-  rateLimiters.paymentLimiter,
-);
+// app.use(rateLimiters.globalLimiter);
+// app.use("/api/v1/auth", rateLimiters.authLimiter);
+// app.use(
+//   "/api/v1/subscriptions/create-checkout-session",
+//   rateLimiters.paymentLimiter,
+// );
 
 // 6. Routes
 app.use("/api/v1", indexRoute);

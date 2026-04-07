@@ -34,6 +34,11 @@ export const updateProfileSchema = z.object({
     .max(250, "Bio must be at most 250 characters long")
     .nullable()
     .optional(),
+  phoneNumber: z
+    .string()
+    .min(11, "Phone number must be at least 11 characters long")
+    .nullable()
+    .optional(),
 });
 
 export const changePasswordSchema = z.object({

@@ -11,13 +11,28 @@ import { authService } from "./auth.service";
 const register = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
 
-  await authService.register(payload);
+  const result = await authService.register(req, payload);
+  const { accessToken, refreshToken, token } = result;
 
   sendResponse(
     res,
     status.CREATED,
     true,
     "Registration successful. Please verify your email.",
+    {
+      token,
+      accessToken,
+      refreshToken,
+      user: {
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        image: result.user.image,
+        role: result.user.role,
+        emailVerified: result.user.emailVerified,
+        needPasswordChange: result.user.needPasswordChange,
+      },
+    },
   );
 });
 
@@ -25,10 +40,6 @@ const login = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
   const result = await authService.login(req, payload);
   const { accessToken, refreshToken, token } = result;
-
-  tokenUtils.setAccessTokenCookie(res, accessToken);
-  tokenUtils.setRefreshTokenCookie(res, refreshToken);
-  tokenUtils.setBetterAuthSessionCookie(res, token);
 
   sendResponse(res, status.OK, true, "User logged in successfully", {
     token,
@@ -128,6 +139,7 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const { email, otp } = req.body;
+  console.log(req.body, "veriy email controller");
   await authService.verifyEmail(email, otp);
 
   sendResponse(res, status.OK, true, "Email verified successfully");

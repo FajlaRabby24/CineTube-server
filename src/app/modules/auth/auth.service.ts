@@ -12,7 +12,7 @@ import {
   IUpdatePayload,
 } from "./auth.type";
 
-const register = async (payload: IRegisterPayload) => {
+const register = async (req: Request, payload: IRegisterPayload) => {
   const { name, email, password, bio, image } = payload;
 
   const data = await auth.api.signUpEmail({
@@ -29,33 +29,37 @@ const register = async (payload: IRegisterPayload) => {
     throw new AppError(400, "User not found");
   }
 
-  // const tokenInfo = {
-  //   userId: data.user.id,
-  //   role: data.user.role,
-  //   name: data.user.name,
-  //   email: data.user.email,
-  //   image: data.user.image,
-  //   isBanned: data.user.isBanned,
-  //   isActive: data.user.isActive,
-  // };
+  const session = await prisma.session.findFirst({
+    where: { token: data.token! },
+    select: { id: true },
+  });
 
-  // const accessToken = tokenUtils.getAccessToken(tokenInfo);
-  // const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
-
-  const user = await prisma.user.findUnique({
-    where: {
-      id: data.user.id,
-    },
-    select: {
-      name: true,
+  await prisma.session.updateMany({
+    where: { token: data.token! },
+    data: {
+      ipAddress: req.ip ?? req.socket.remoteAddress ?? null,
+      userAgent: req.headers["user-agent"] ?? "unknown",
     },
   });
 
+  const tokenInfo = {
+    userId: data.user.id,
+    role: data.user.role,
+    name: data.user.name,
+    email: data.user.email,
+    image: data.user.image,
+    isBanned: data.user.isBanned,
+    isActive: data.user.isActive,
+    sessionId: session?.id,
+  };
+
+  const accessToken = tokenUtils.getAccessToken(tokenInfo);
+  const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
+
   return {
-    token: data.token,
-    name: user?.name,
-    // accessToken,
-    // refreshToken,
+    ...data,
+    accessToken,
+    refreshToken,
   };
 };
 

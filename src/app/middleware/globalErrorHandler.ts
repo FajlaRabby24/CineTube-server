@@ -24,7 +24,7 @@ export const globalErrorHandler = async (
   next: NextFunction,
 ) => {
   if (envVars.NODE_ENV === "development") {
-    console.log("Error from Global Error Handler", err);
+    // console.log("Error from Global Error Handler", err);
   }
 
   let errorSources: IErrorSources[] = [];

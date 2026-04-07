@@ -1,4 +1,5 @@
 import { Router } from "express";
+import status from "http-status";
 import { AdminRoutes } from "../modules/admin/admin.route";
 import { authRoute } from "../modules/auth/auth.route";
 import { CommentRoutes } from "../modules/comment/comment.route";
@@ -11,6 +12,7 @@ import { ReviewRoutes } from "../modules/review/review.route";
 import { SubscriptionRoutes } from "../modules/subscription/subscription.route";
 import { TagRoutes } from "../modules/tag/tag.route";
 import { WatchlistRoutes } from "../modules/watchlist/watchlist.route";
+import { sendResponse } from "../utils/sendResponse";
 
 const router = Router();
 
@@ -34,24 +36,26 @@ router.post("/validate-file", async (req, res) => {
   const maxSize = 2 * 1024 * 1024; // 2MB
 
   if (!name || !size || !type) {
-    return res.status(400).json({ ok: false, message: "Missing file info" });
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing file info" });
   }
 
   if (!allowedTypes.includes(type)) {
     return res.status(400).json({
-      ok: false,
+      success: false,
       message: "Only JPG, PNG, WEBP allowed",
     });
   }
 
   if (size > maxSize) {
     return res.status(400).json({
-      ok: false,
+      success: false,
       message: "File size must be under 5MB",
     });
   }
 
-  return res.status(200).json({ ok: true, message: "File is valid" });
+  return sendResponse(res, status.OK, true, "File is valid", null);
 });
 
 export const indexRoute = router;

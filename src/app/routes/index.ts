@@ -29,20 +29,29 @@ router.use("/subscriptions", SubscriptionRoutes);
 
 router.post("/validate-file", async (req, res) => {
   const { name, size, type } = req.body;
-  console.log(req.body, "in valide file route");
 
   const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
   const maxSize = 2 * 1024 * 1024; // 2MB
 
+  if (!name || !size || !type) {
+    return res.status(400).json({ ok: false, message: "Missing file info" });
+  }
+
   if (!allowedTypes.includes(type)) {
-    return res.json({ ok: false, message: "Only JPG/PNG/WEBP allowed" });
+    return res.status(400).json({
+      ok: false,
+      message: "Only JPG, PNG, WEBP allowed",
+    });
   }
 
   if (size > maxSize) {
-    return res.json({ ok: false, message: "File size max 2MB" });
+    return res.status(400).json({
+      ok: false,
+      message: "File size must be under 5MB",
+    });
   }
 
-  return res.json({ ok: true });
+  return res.status(200).json({ ok: true, message: "File is valid" });
 });
 
 export const indexRoute = router;

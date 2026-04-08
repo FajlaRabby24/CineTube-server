@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import status from "http-status";
 import { envVars } from "../../config/env";
+import AppError from "../../errorhandlers/AppError";
 import { IRequestUser } from "../../interfaces/requestUser.interface";
 import { auth } from "../../lib/auth";
 import { catchAsync } from "../../utils/catchAsync";
@@ -73,6 +74,33 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
     "User profile fetched successfully",
     result,
   );
+});
+
+const getNewToken = catchAsync(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken;
+  const sessionToken = req.cookies["better-auth.session_token"];
+
+  if (!refreshToken) {
+    throw new AppError(status.UNAUTHORIZED, "Refresh token is missing");
+  }
+
+  const result = await authService.getNewToken(refreshToken, sessionToken);
+
+  const {
+    accessToken,
+    refreshToken: newRefreshToken,
+    sessionToken: token,
+  } = result;
+
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, newRefreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, token);
+
+  sendResponse(res, status.OK, true, "New tokens generated successfully", {
+    accessToken,
+    newRefreshToken,
+    token,
+  });
 });
 
 const getSessions = catchAsync(async (req: Request, res: Response) => {
@@ -249,6 +277,7 @@ export const authController = {
   register,
   login,
   getMe,
+  getNewToken,
   getSessions,
   changePassword,
   verifyEmail,

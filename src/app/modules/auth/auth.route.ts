@@ -34,18 +34,18 @@ router.post(
   authController.changePassword,
 );
 
+router.post("/refresh-token", authController.getNewToken);
+
 router.post(
   "/verify-email-otp",
   validateRequest(authValidation.verifyEmailSchema),
   authController.verifyEmail,
 );
-
 router.post(
   "/forget-password",
   validateRequest(authValidation.forgotPasswordSchema),
   authController.forgotPassword,
 );
-
 router.post(
   "/reset-password",
   checkAuth(),
@@ -54,13 +54,11 @@ router.post(
 );
 
 router.get("/sessions", checkAuth(), authController.getSessions);
-
 router.delete(
   "/logout/all-sessions",
   checkAuth(),
   authController.logoutAllSession,
 );
-
 router.delete("/logout/:sessionId", checkAuth(), authController.logoutSession);
 
 router.get("/login/google", authController.googleLogin);

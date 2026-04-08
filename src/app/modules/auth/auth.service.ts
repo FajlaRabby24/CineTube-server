@@ -1,9 +1,12 @@
 import { Request } from "express";
 import status from "http-status";
+import { JwtPayload } from "jsonwebtoken";
+import { envVars } from "../../config/env";
 import AppError from "../../errorhandlers/AppError";
 import { IRequestUser } from "../../interfaces/requestUser.interface";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
+import { jwtUtils } from "../../utils/jwt";
 import { tokenUtils } from "../../utils/token";
 import {
   IChangePasswordPayload,
@@ -318,6 +321,7 @@ const getMe = async (user: IRequestUser) => {
       isActive: true,
       isBanned: true,
       role: true,
+      emailVerified: true,
     },
   });
 
@@ -326,6 +330,63 @@ const getMe = async (user: IRequestUser) => {
   }
 
   return isUserExists;
+};
+
+const getNewToken = async (refreshToken: string, sessionToken: string) => {
+  const isSessionTokenExists = await prisma.session.findUnique({
+    where: {
+      token: sessionToken,
+    },
+    include: {
+      user: true,
+    },
+  });
+
+  if (!isSessionTokenExists) {
+    throw new AppError(status.UNAUTHORIZED, "Invalid session token");
+  }
+
+  const verifiedRefreshToken = jwtUtils.verifyToken(
+    refreshToken,
+    envVars.REFRESH_TOKEN_SECRET,
+  );
+
+  if (!verifiedRefreshToken.success && verifiedRefreshToken.error) {
+    throw new AppError(status.UNAUTHORIZED, "Invalid refresh token");
+  }
+
+  const data = verifiedRefreshToken.data as JwtPayload;
+
+  const tokenInfo = {
+    userId: data.userId,
+    role: data.role,
+    name: data.name,
+    email: data.email,
+    status: data.status,
+    isDeleted: data.isDeleted,
+    emailVerified: data.emailVerified,
+  };
+
+  const newAccessToken = tokenUtils.getAccessToken(tokenInfo);
+  const newRefreshToken = tokenUtils.getRefreshToken(tokenInfo);
+
+  // update session
+  const { token } = await prisma.session.update({
+    where: {
+      token: sessionToken,
+    },
+    data: {
+      token: sessionToken,
+      expiresAt: new Date(Date.now() + 60 * 60 * 60 * 24 * 1000),
+      updatedAt: new Date(),
+    },
+  });
+
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    sessionToken: token,
+  };
 };
 
 const getUserSessions = async (userId: string) => {
@@ -441,6 +502,7 @@ export const authService = {
   resetPassword,
   changePassword,
   getMe,
+  getNewToken,
   getSession,
   profileUpdate,
   getUserSessions,

@@ -1,6 +1,7 @@
 import { Request } from "express";
 import status from "http-status";
 import { JwtPayload } from "jsonwebtoken";
+import { deleteFromCloudinary } from "../../config/cloudinary.config";
 import { envVars } from "../../config/env";
 import AppError from "../../errorhandlers/AppError";
 import { IRequestUser } from "../../interfaces/requestUser.interface";
@@ -17,23 +18,38 @@ import {
 
 const register = async (payload: IRegisterPayload) => {
   const { name, email, password, bio, image } = payload;
+  try {
+    const data = await auth.api.signUpEmail({
+      body: {
+        name,
+        email,
+        password,
+        bio,
+        image,
+      },
+    });
 
-  const data = await auth.api.signUpEmail({
-    body: {
-      name,
-      email,
-      password,
-      bio,
-      image,
-    },
-  });
+    if (!data.user) {
+      throw new AppError(400, "User not found");
+    }
 
-  if (!data.user) {
-    throw new AppError(400, "User not found");
+    return {
+      user: {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        image: data.user.image,
+        role: data.user.role,
+        emailVerified: data.user.emailVerified,
+        needPasswordChange: data.user.needPasswordChange,
+      },
+    };
+  } catch (error) {
+    console.log("error from register service", error);
+    if (image) {
+      await deleteFromCloudinary(image);
+    }
   }
-
-  console.log(data, "from auth serve");
-  return data;
 };
 
 const verifyEmail = async (req: Request, email: string, otp: string) => {

@@ -19,17 +19,7 @@ const register = catchAsync(async (req: Request, res: Response) => {
     status.CREATED,
     true,
     "Registration successful. Please verify your email.",
-    {
-      user: {
-        id: result.user.id,
-        name: result.user.name,
-        email: result.user.email,
-        image: result.user.image,
-        role: result.user.role,
-        emailVerified: result.user.emailVerified,
-        needPasswordChange: result.user.needPasswordChange,
-      },
-    },
+    result,
   );
 });
 

@@ -36,26 +36,28 @@ router.post("/validate-file", async (req, res) => {
   const maxSize = 2 * 1024 * 1024; // 2MB
 
   if (!name || !size || !type) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Missing file info" });
+    return sendResponse(res, status.BAD_REQUEST, false, "Missing file info");
   }
 
   if (!allowedTypes.includes(type)) {
-    return res.status(400).json({
-      success: false,
-      message: "Only JPG, PNG, WEBP allowed",
-    });
+    return sendResponse(
+      res,
+      status.BAD_REQUEST,
+      false,
+      "Only JPG, PNG, WEBP allowed",
+    );
   }
 
   if (size > maxSize) {
-    return res.status(400).json({
-      success: false,
-      message: "File size must be under 5MB",
-    });
+    return sendResponse(
+      res,
+      status.BAD_REQUEST,
+      false,
+      "File size must be under 2MB",
+    );
   }
 
-  return sendResponse(res, status.OK, true, "File is valid", null);
+  return sendResponse(res, status.OK, true, "File is valid");
 });
 
 export const indexRoute = router;

@@ -15,7 +15,7 @@ import {
   IUpdatePayload,
 } from "./auth.type";
 
-const register = async (req: Request, payload: IRegisterPayload) => {
+const register = async (payload: IRegisterPayload) => {
   const { name, email, password, bio, image } = payload;
 
   const data = await auth.api.signUpEmail({
@@ -32,27 +32,56 @@ const register = async (req: Request, payload: IRegisterPayload) => {
     throw new AppError(400, "User not found");
   }
 
-  const session = await prisma.session.findFirst({
-    where: { token: data.token! },
-    select: { id: true },
-  });
+  console.log(data, "from auth serve");
+  return data;
+};
 
-  await prisma.session.updateMany({
-    where: { token: data.token! },
-    data: {
-      ipAddress: req.ip ?? req.socket.remoteAddress ?? null,
-      userAgent: req.headers["user-agent"] ?? "unknown",
+const verifyEmail = async (req: Request, email: string, otp: string) => {
+  const result = await auth.api.verifyEmailOTP({
+    body: {
+      email,
+      otp,
     },
   });
 
+  // ✅ ban/active check আগে করো, session update এর আগে
+  if (result.user.isBanned || !result.user.isActive) {
+    throw new AppError(400, "User is banned or not active");
+  }
+
+  // ✅ device info + sessionId একসাথে
+  const session = await prisma.session.findFirst({
+    where: { token: result.token! },
+    select: { id: true },
+  });
+
+  if (result.status && !result.user.emailVerified) {
+    await prisma.user.update({
+      where: {
+        email,
+      },
+      data: {
+        emailVerified: true,
+      },
+    });
+
+    await prisma.session.updateMany({
+      where: { token: result.token! },
+      data: {
+        ipAddress: req.ip ?? req.socket.remoteAddress ?? null,
+        userAgent: req.headers["user-agent"] ?? "unknown",
+      },
+    });
+  }
+
   const tokenInfo = {
-    userId: data.user.id,
-    role: data.user.role,
-    name: data.user.name,
-    email: data.user.email,
-    image: data.user.image,
-    isBanned: data.user.isBanned,
-    isActive: data.user.isActive,
+    userId: result.user.id,
+    role: result.user.role,
+    name: result.user.name,
+    email: result.user.email,
+    image: result.user.image,
+    isBanned: result.user.isBanned,
+    isActive: result.user.isActive,
     sessionId: session?.id,
   };
 
@@ -60,7 +89,7 @@ const register = async (req: Request, payload: IRegisterPayload) => {
   const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
 
   return {
-    ...data,
+    ...result,
     accessToken,
     refreshToken,
   };
@@ -195,26 +224,6 @@ const forgotPassword = async (email: string) => {
       email,
     },
   });
-};
-
-const verifyEmail = async (email: string, otp: string) => {
-  const result = await auth.api.verifyEmailOTP({
-    body: {
-      email,
-      otp,
-    },
-  });
-
-  if (result.status && !result.user.emailVerified) {
-    await prisma.user.update({
-      where: {
-        email,
-      },
-      data: {
-        emailVerified: true,
-      },
-    });
-  }
 };
 
 const resetPassword = async (

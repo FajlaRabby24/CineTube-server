@@ -11,9 +11,8 @@ import { authService } from "./auth.service";
 
 const register = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
-
-  const result = await authService.register(req, payload);
-  const { accessToken, refreshToken, token } = result;
+  console.log(payload, "from auth controller");
+  const result = await authService.register(payload);
 
   sendResponse(
     res,
@@ -21,9 +20,6 @@ const register = catchAsync(async (req: Request, res: Response) => {
     true,
     "Registration successful. Please verify your email.",
     {
-      token,
-      accessToken,
-      refreshToken,
       user: {
         id: result.user.id,
         name: result.user.name,
@@ -168,9 +164,23 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const { email, otp } = req.body;
   console.log(req.body, "veriy email controller");
-  await authService.verifyEmail(email, otp);
+  const result = await authService.verifyEmail(req, email, otp);
+  const { accessToken, refreshToken, token } = result;
 
-  sendResponse(res, status.OK, true, "Email verified successfully");
+  sendResponse(res, status.OK, true, "Email verified successfully", {
+    token,
+    accessToken,
+    refreshToken,
+    user: {
+      id: result.user.id,
+      name: result.user.name,
+      email: result.user.email,
+      image: result.user.image,
+      role: result.user.role,
+      emailVerified: result.user.emailVerified,
+      needPasswordChange: result.user.needPasswordChange,
+    },
+  });
 });
 
 const forgotPassword = catchAsync(async (req: Request, res: Response) => {

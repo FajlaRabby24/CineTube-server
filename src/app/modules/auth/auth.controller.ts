@@ -217,9 +217,13 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 
 const logoutSession = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as IRequestUser;
-  const sessionId = req.params.sessionId;
+  const { sessionId, token } = req.params;
   if (!sessionId) throw new Error("Session id not found");
-  await authService.logoutSession(user.userId, sessionId as string);
+  await authService.logoutSession(
+    user.userId,
+    sessionId as string,
+    token as string,
+  );
 
   sendResponse(res, status.OK, true, "Logged out successfully");
 });

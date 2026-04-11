@@ -60,7 +60,11 @@ router.delete(
   checkAuth(),
   authController.logoutAllSession,
 );
-router.delete("/logout/:sessionId", checkAuth(), authController.logoutSession);
+router.delete(
+  "/logout/:sessionId/:token",
+  checkAuth(),
+  authController.logoutSession,
+);
 
 router.get("/login/google", authController.googleLogin);
 router.get("/google/success", authController.googleLoginSuccess);

@@ -224,9 +224,13 @@ const login = async (req: Request, payload: ILoginPayload) => {
   };
 };
 
-const logoutSession = async (userId: string, sessionId: string) => {
+const logoutSession = async (
+  userId: string,
+  sessionId: string,
+  token: string,
+) => {
   const session = await prisma.session.findFirst({
-    where: { id: sessionId, userId },
+    where: { id: sessionId, userId, token },
   });
 
   if (!session) {
@@ -242,14 +246,14 @@ const logoutSession = async (userId: string, sessionId: string) => {
   } catch (_) {}
 
   const result = await prisma.session.delete({
-    where: { id: sessionId },
+    where: { id: sessionId, token, userId },
     select: {
       id: true,
     },
   });
 
   if (!result) {
-    throw new AppError(404, "Session not found");
+    throw new AppError(404, "Session does not exist");
   }
   return true;
 };

@@ -413,6 +413,13 @@ const getMe = async (user: IRequestUser) => {
       isBanned: true,
       role: true,
       emailVerified: true,
+      needPasswordChange: true,
+      sessions: {
+        select: {
+          id: true,
+          token: true,
+        },
+      },
     },
   });
 

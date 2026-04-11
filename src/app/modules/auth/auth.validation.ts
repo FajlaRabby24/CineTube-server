@@ -20,6 +20,7 @@ export const loginSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters long")
     .max(20, "Password must be at most 20 characters long"),
+  userAgent: z.string().optional(),
 });
 
 export const updateProfileSchema = z.object({

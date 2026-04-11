@@ -19,6 +19,7 @@ router.post(
 );
 
 router.get("/me", checkAuth(), authController.getMe);
+router.get("/my-profile", checkAuth(), authController.getMyProfile);
 
 router.patch(
   "/me",

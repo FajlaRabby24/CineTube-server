@@ -16,7 +16,7 @@ router.post(
 
 router.get(
   "/stats",
-  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  // checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   AdminController.getDashboardStats,
 );
 

@@ -1,6 +1,7 @@
 import { Request } from "express";
 import status from "http-status";
 import { JwtPayload } from "jsonwebtoken";
+import { UAParser } from "ua-parser-js";
 import { deleteFromCloudinary } from "../../config/cloudinary.config";
 import { envVars } from "../../config/env";
 import AppError from "../../errorhandlers/AppError";
@@ -111,8 +112,59 @@ const verifyEmail = async (req: Request, email: string, otp: string) => {
   };
 };
 
+// const login = async (req: Request, payload: ILoginPayload) => {
+//   const { email, password } = payload;
+
+//   const data = await auth.api.signInEmail({
+//     body: { email, password },
+//   });
+
+//   if (!data?.token) {
+//     throw new AppError(401, "Invalid credentials");
+//   }
+
+//   // ✅ ban/active check আগে করো, session update এর আগে
+//   if (data.user.isBanned || !data.user.isActive) {
+//     throw new AppError(400, "User is banned or not active");
+//   }
+
+//   // ✅ device info + sessionId একসাথে
+//   const session = await prisma.session.findFirst({
+//     where: { token: data.token },
+//     select: { id: true },
+//   });
+
+//   await prisma.session.updateMany({
+//     where: { token: data.token },
+//     data: {
+//       ipAddress: req.ip ?? req.socket.remoteAddress ?? null,
+//       userAgent: req.headers["user-agent"] ?? "unknown",
+//     },
+//   });
+
+//   const tokenInfo = {
+//     userId: data.user.id,
+//     role: data.user.role,
+//     name: data.user.name,
+//     email: data.user.email,
+//     image: data.user.image,
+//     isBanned: data.user.isBanned,
+//     isActive: data.user.isActive,
+//     sessionId: session?.id,
+//   };
+
+//   const accessToken = tokenUtils.getAccessToken(tokenInfo);
+//   const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
+
+//   return {
+//     ...data,
+//     accessToken,
+//     refreshToken,
+//   };
+// };
+
 const login = async (req: Request, payload: ILoginPayload) => {
-  const { email, password } = payload;
+  const { email, password, userAgent: clientUserAgent } = payload;
 
   const data = await auth.api.signInEmail({
     body: { email, password },
@@ -122,22 +174,32 @@ const login = async (req: Request, payload: ILoginPayload) => {
     throw new AppError(401, "Invalid credentials");
   }
 
-  // ✅ ban/active check আগে করো, session update এর আগে
   if (data.user.isBanned || !data.user.isActive) {
     throw new AppError(400, "User is banned or not active");
   }
 
-  // ✅ device info + sessionId একসাথে
   const session = await prisma.session.findFirst({
     where: { token: data.token },
     select: { id: true },
   });
+  const rawUserAgent =
+    clientUserAgent ?? req.headers["user-agent"] ?? "unknown";
+  const parser = new UAParser(rawUserAgent);
+  const os = parser.getOS();
+  const device = parser.getDevice();
+
+  const formattedUserAgent =
+    device.type === "mobile" || device.type === "tablet"
+      ? `${device.vendor ?? ""} ${device.model ?? ""} (${os.name ?? "Unknown"})`.trim()
+      : `${os.name ?? "Unknown"} ${os.version ?? ""}`.trim() || rawUserAgent;
+  const rawIp = req.ip ?? req.socket.remoteAddress ?? null;
+  const ipAddress = rawIp === "::1" ? "127.0.0.1" : rawIp;
 
   await prisma.session.updateMany({
     where: { token: data.token },
     data: {
-      ipAddress: req.ip ?? req.socket.remoteAddress ?? null,
-      userAgent: req.headers["user-agent"] ?? "unknown",
+      ipAddress,
+      userAgent: formattedUserAgent,
     },
   });
 
@@ -357,6 +419,55 @@ const getMe = async (user: IRequestUser) => {
   return isUserExists;
 };
 
+const getMyProfile = async (user: IRequestUser) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      id: user.userId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      role: true,
+      isActive: true,
+      phoneNumber: true,
+      bio: true,
+      accounts: {
+        select: {
+          id: true,
+        },
+      },
+      watchlists: true,
+      reviews: true,
+      subscription: true,
+      comments: true,
+      notifications: true,
+      payments: true,
+      reports: true,
+      reviewLikes: true,
+      sessions: {
+        select: {
+          userAgent: true,
+          token: true,
+          id: true,
+        },
+      },
+      admin: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  });
+
+  if (!isUserExists) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  return isUserExists;
+};
+
 const getNewToken = async (refreshToken: string, sessionToken: string) => {
   const isSessionTokenExists = await prisma.session.findUnique({
     where: {
@@ -527,6 +638,7 @@ export const authService = {
   resetPassword,
   changePassword,
   getMe,
+  getMyProfile,
   getNewToken,
   getSession,
   profileUpdate,

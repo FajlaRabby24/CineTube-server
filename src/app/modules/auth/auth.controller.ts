@@ -28,10 +28,14 @@ const login = catchAsync(async (req: Request, res: Response) => {
   const result = await authService.login(req, payload);
   const { accessToken, refreshToken, token } = result;
 
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, token);
+
   sendResponse(res, status.OK, true, "User logged in successfully", {
-    token,
     accessToken,
     refreshToken,
+    token,
     user: {
       id: result.user.id,
       name: result.user.name,
@@ -52,6 +56,24 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
   }
 
   const result = await authService.getMe(user);
+
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "User profile fetched successfully",
+    result,
+  );
+});
+
+const getMyProfile = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user as IRequestUser;
+
+  if (!user) {
+    return sendResponse(res, status.UNAUTHORIZED, false, "Unauthorized");
+  }
+
+  const result = await authService.getMyProfile(user);
 
   sendResponse(
     res,
@@ -157,10 +179,11 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const result = await authService.verifyEmail(req, email, otp);
   const { accessToken, refreshToken, token } = result;
 
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, token as string);
+
   sendResponse(res, status.OK, true, "Email verified successfully", {
-    token,
-    accessToken,
-    refreshToken,
     user: {
       id: result.user.id,
       name: result.user.name,
@@ -277,6 +300,7 @@ export const authController = {
   register,
   login,
   getMe,
+  getMyProfile,
   getNewToken,
   getSessions,
   changePassword,

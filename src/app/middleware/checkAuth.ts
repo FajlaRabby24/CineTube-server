@@ -17,7 +17,6 @@ export const checkAuth =
       );
       const accessToken = cookieUtils.getCookie(req, "accessToken");
 
-      // ✅ দুটোর একটাও না থাকলে error
       if (!sessionToken && !accessToken) {
         throw new AppError(
           status.UNAUTHORIZED,
@@ -29,7 +28,7 @@ export const checkAuth =
       let userRole: Role | undefined;
       let userEmail: string | undefined;
 
-      // ✅ Session আগে check করো
+      // ✅ Step 1: Session token check
       if (sessionToken) {
         const session = await prisma.session.findFirst({
           where: {
@@ -86,7 +85,7 @@ export const checkAuth =
         }
       }
 
-      // ✅ Session কাজ না করলে তখনই accessToken check করো
+      // ✅ Step 2: Access token check (only if session failed)
       if (!userId && accessToken) {
         const verifiedToken = jwtUtils.verifyToken(
           accessToken,
@@ -97,10 +96,34 @@ export const checkAuth =
           throw new AppError(status.UNAUTHORIZED, "Invalid access token");
         }
 
-        const { userId: uid, role, email } = verifiedToken.data;
+        const { userId: uid, role, email, sessionId } = verifiedToken.data;
 
         if (!uid || !role) {
           throw new AppError(status.UNAUTHORIZED, "Invalid token payload");
+        }
+
+        // ✅ Step 3: Verify session still exists in DB
+        const sessionExists = await prisma.session.findFirst({
+          where: {
+            id: sessionId as string,
+            userId: uid as string,
+            expiresAt: { gt: new Date() },
+          },
+          select: { id: true },
+        });
+
+        if (!sessionExists) {
+          // ✅ Clear all cookies since session is deleted
+          cookieUtils.clearCookie(res, "accessToken", { httpOnly: true });
+          cookieUtils.clearCookie(res, "refreshToken", { httpOnly: true });
+          cookieUtils.clearCookie(res, "better-auth.session_token", {
+            httpOnly: true,
+          });
+
+          throw new AppError(
+            status.UNAUTHORIZED,
+            "Session expired. Please login again.",
+          );
         }
 
         userId = uid as string;
@@ -108,12 +131,12 @@ export const checkAuth =
         userEmail = email as string;
       }
 
-      // ✅ Final validation
+      // ✅ Step 4: Final validation
       if (!userId || !userRole) {
         throw new AppError(status.UNAUTHORIZED, "Unauthorized: Invalid token");
       }
 
-      // ✅ Role check একবারই
+      // ✅ Step 5: Role check
       if (authRoles.length > 0 && !authRoles.includes(userRole as Role)) {
         throw new AppError(
           status.FORBIDDEN,

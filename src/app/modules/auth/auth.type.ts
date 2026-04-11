@@ -9,6 +9,7 @@ export interface IRegisterPayload {
 export interface ILoginPayload {
   email: string;
   password: string;
+  userAgent?: string;
 }
 
 export interface IUpdatePayload {

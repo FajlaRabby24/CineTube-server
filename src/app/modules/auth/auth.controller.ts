@@ -184,6 +184,9 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   tokenUtils.setBetterAuthSessionCookie(res, token as string);
 
   sendResponse(res, status.OK, true, "Email verified successfully", {
+    accessToken,
+    refreshToken,
+    token,
     user: {
       id: result.user.id,
       name: result.user.name,

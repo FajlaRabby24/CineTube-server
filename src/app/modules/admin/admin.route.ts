@@ -44,6 +44,12 @@ router.get(
   AdminController.getAllAdmin,
 );
 
+router.get(
+  "/admins/:adminId",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  AdminController.getAdminById,
+);
+
 router.patch(
   "/users/:userId/ban",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),

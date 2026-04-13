@@ -211,6 +211,21 @@ const getAllAdmins = async (query: Record<string, any>) => {
   return await userQuery.execute();
 };
 
+const getAdminById = async (adminId: string) => {
+  const admin = await prisma.admin.findUnique({
+    where: { id: adminId },
+    include: {
+      user: true,
+    },
+  });
+
+  if (!admin) {
+    throw new AppError(status.NOT_FOUND, "Admin not found");
+  }
+
+  return admin;
+};
+
 const banUnbanUser = async (
   adminId: string,
   userId: string,
@@ -376,4 +391,5 @@ export const AdminService = {
   refundPayment,
   getAllAdmins,
   getUserReviews,
+  getAdminById,
 };

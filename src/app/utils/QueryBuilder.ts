@@ -336,6 +336,33 @@ export class QueryBuilder<
     return this;
   }
 
+  staticSelect(
+    fields: string[],
+    relations?: Record<string, boolean | { select: Record<string, boolean> }>,
+  ): this {
+    this.selectFields = {};
+
+    fields.forEach((field) => {
+      if (this.selectFields) {
+        this.selectFields[field] = true;
+      }
+    });
+
+    // Relation গুলো select এর মধ্যে merge করো
+    if (relations) {
+      Object.keys(relations).forEach((relation) => {
+        if (this.selectFields) {
+          this.selectFields[relation] = relations[relation] as boolean;
+        }
+      });
+    }
+
+    this.query.select = this.selectFields as Record<string, boolean>;
+    delete this.query.include; // include সরিয়ে দাও
+
+    return this;
+  }
+
   include(relation: TInclude): this {
     if (this.selectFields) {
       return this;
@@ -492,7 +519,10 @@ export class QueryBuilder<
       {};
 
     Object.keys(value).forEach((operator) => {
-      const operatorValue = value[operator] as string | number | (string | number)[];
+      const operatorValue = value[operator] as
+        | string
+        | number
+        | (string | number)[];
 
       const parsedValue: string | number | (string | number)[] =
         typeof operatorValue === "string" && !isNaN(Number(operatorValue))

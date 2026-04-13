@@ -192,9 +192,52 @@ const getUserReviews = async (userId: string) => {
   return reviews;
 };
 
+/**
+ * {
+    "success": true,
+    "message": "Admins retrieved successfully",
+    "data": {
+        "data": [
+            {
+                "id": "bEpkxlIzoCRA8Yop97swIuE17XDEPD69",
+                "name": "Admin",
+                "email": "admin@gmail.com",
+                "emailVerified": true,
+                "image": null,
+                "createdAt": "2026-04-13T13:55:25.862Z",
+                "updatedAt": "2026-04-13T13:55:25.892Z",
+                "role": "ADMIN",
+                "bio": null,
+                "isActive": true,
+                "isBanned": false,
+                "bannedReason": null,
+                "phoneNumber": null,
+                "bannedAt": null,
+                "needPasswordChange": false,
+                "admin": {
+                    "id": "019d8720-2c4b-7154-af19-f305303ee315",
+                    "userId": "bEpkxlIzoCRA8Yop97swIuE17XDEPD69",
+                    "designation": null,
+                    "address": "Chandpur",
+                    "createdAt": "2026-04-13T13:55:25.899Z",
+                    "updatedAt": "2026-04-13T13:55:25.899Z"
+                }
+            }
+        ],
+    }`
+}
+ */
+
 const getAllAdmins = async (query: Record<string, any>) => {
   const userQuery = new QueryBuilder(prisma.user, query, {
-    searchableFields: ["name", "email", "phoneNumber"],
+    searchableFields: [
+      "name",
+      "email",
+      "phoneNumber",
+      "bio",
+      "admin.address",
+      "admin.designation",
+    ],
     filterableFields: ["role", "isActive", "isBanned"],
   })
     .search()
@@ -204,9 +247,25 @@ const getAllAdmins = async (query: Record<string, any>) => {
     })
     .sort()
     .paginate()
-    .include({
-      subscription: true,
-    });
+    .staticSelect(
+      [
+        "id",
+        "name",
+        "email",
+        "role",
+        "isActive",
+        "isBanned",
+        "image",
+        "createdAt",
+      ],
+      {
+        admin: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    );
 
   return await userQuery.execute();
 };

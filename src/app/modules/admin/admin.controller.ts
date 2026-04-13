@@ -50,8 +50,14 @@ const getUserReviews = catchAsync(async (req: Request, res: Response) => {
 
 const getAllAdmin = catchAsync(async (req: Request, res: Response) => {
   const result = await AdminService.getAllAdmins(req.query);
-
-  sendResponse(res, status.OK, true, "Admins retrieved successfully", result);
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "Admins retrieved successfully",
+    result.data,
+    result.meta,
+  );
 });
 
 const getAdminById = catchAsync(async (req: Request, res: Response) => {

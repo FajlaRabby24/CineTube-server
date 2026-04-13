@@ -33,6 +33,12 @@ router.get(
 );
 
 router.get(
+  "/users/:userId/reviews",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  AdminController.getUserReviews,
+);
+
+router.get(
   "/admins",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   AdminController.getAllAdmin,

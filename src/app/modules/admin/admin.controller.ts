@@ -35,6 +35,19 @@ const getUserById = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "User retrieved successfully", result);
 });
 
+const getUserReviews = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const result = await AdminService.getUserReviews(userId as string);
+
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "User reviews retrieved successfully",
+    result,
+  );
+});
+
 const getAllAdmin = catchAsync(async (req: Request, res: Response) => {
   const result = await AdminService.getAllAdmins(req.query);
 
@@ -43,7 +56,8 @@ const getAllAdmin = catchAsync(async (req: Request, res: Response) => {
 
 const banUnbanUser = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.params;
-  const adminId = (req as any).user.userId;
+  const adminId = req.user.userId;
+  console.log(req.body, "ban user controller");
   const result = await AdminService.banUnbanUser(
     adminId,
     userId as string,
@@ -106,4 +120,5 @@ export const AdminController = {
   getPaymentAnalytics,
   refundPayment,
   getAllAdmin,
+  getUserReviews,
 };

@@ -181,6 +181,17 @@ const getUserById = async (userId: string) => {
   return user;
 };
 
+const getUserReviews = async (userId: string) => {
+  const reviews = await prisma.review.findMany({
+    where: { userId },
+    include: {
+      media: true,
+    },
+  });
+
+  return reviews;
+};
+
 const getAllAdmins = async (query: Record<string, any>) => {
   const userQuery = new QueryBuilder(prisma.user, query, {
     searchableFields: ["name", "email", "phoneNumber"],
@@ -364,4 +375,5 @@ export const AdminService = {
   getPaymentAnalytics,
   refundPayment,
   getAllAdmins,
+  getUserReviews,
 };

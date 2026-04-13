@@ -27,6 +27,12 @@ router.get(
 );
 
 router.get(
+  "/users/:userId",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  AdminController.getUserById,
+);
+
+router.get(
   "/admins",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
   AdminController.getAllAdmin,

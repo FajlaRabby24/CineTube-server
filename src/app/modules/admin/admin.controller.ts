@@ -24,8 +24,15 @@ const getDashboardStats = catchAsync(async (req: Request, res: Response) => {
 
 const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   const result = await AdminService.getAllUsers(req.query);
-
+  console.log(req.query, "controller");
   sendResponse(res, status.OK, true, "Users retrieved successfully", result);
+});
+
+const getUserById = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const result = await AdminService.getUserById(userId as string);
+
+  sendResponse(res, status.OK, true, "User retrieved successfully", result);
 });
 
 const getAllAdmin = catchAsync(async (req: Request, res: Response) => {
@@ -93,6 +100,7 @@ export const AdminController = {
   createAdmin,
   getDashboardStats,
   getAllUsers,
+  getUserById,
   banUnbanUser,
   getAuditLogs,
   getPaymentAnalytics,

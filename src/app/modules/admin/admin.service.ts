@@ -165,6 +165,22 @@ const getAllUsers = async (query: Record<string, any>) => {
   return await userQuery.execute();
 };
 
+const getUserById = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      subscription: true,
+      payments: true,
+    },
+  });
+
+  if (!user) {
+    throw new AppError(status.NOT_FOUND, "User not found");
+  }
+
+  return user;
+};
+
 const getAllAdmins = async (query: Record<string, any>) => {
   const userQuery = new QueryBuilder(prisma.user, query, {
     searchableFields: ["name", "email", "phoneNumber"],
@@ -342,6 +358,7 @@ export const AdminService = {
   createAdminIntoDB,
   getDashboardStats,
   getAllUsers,
+  getUserById,
   banUnbanUser,
   getAuditLogs,
   getPaymentAnalytics,

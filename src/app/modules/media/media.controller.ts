@@ -15,7 +15,14 @@ const createMedia = catchAsync(async (req: Request, res: Response) => {
 const getAllMedia = catchAsync(async (req: Request, res: Response) => {
   const result = await MediaService.getAllMediaFromDB(req.query);
 
-  sendResponse(res, status.OK, true, "Media retrieved successfully", result);
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "Media retrieved successfully",
+    result.data,
+    result.meta,
+  );
 });
 
 const getMediaBySlug = catchAsync(async (req: Request, res: Response) => {

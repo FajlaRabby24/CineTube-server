@@ -124,6 +124,7 @@ const getAllMediaFromDB = async (query: Record<string, any>) => {
       "type",
       "averageRating",
       "releaseYear",
+      "pricingType",
     ]);
 
   return await mediaQuery.execute();

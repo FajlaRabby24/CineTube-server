@@ -6,12 +6,19 @@ import { catchAsync } from "../../utils/catchAsync.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { ReviewService } from "./review.service.js";
 
-const getAllReviews = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReviewService.getAllApprovedReviewsFromDB(
+const getAllReviewsAdmin = catchAsync(async (req: Request, res: Response) => {
+  const result = await ReviewService.getAllReviewsForAdminFromDB(
     req.query as IQueryParams,
   );
 
-  sendResponse(res, status.OK, true, "Reviews retrieved successfully", result);
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "Admin reviews retrieved successfully",
+    result.data,
+    result.meta,
+  );
 });
 
 const getPendingReviews = catchAsync(async (req: Request, res: Response) => {
@@ -89,6 +96,13 @@ const deleteReview = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "Review deleted successfully", null);
 });
 
+const deleteReviewAdmin = catchAsync(async (req: Request, res: Response) => {
+  const { reviewId } = req.params;
+  await ReviewService.deleteReviewByAdminFromDB(reviewId as string);
+
+  sendResponse(res, status.OK, true, "Review deleted successfully", null);
+});
+
 const approveReview = catchAsync(async (req: Request, res: Response) => {
   const { reviewId } = req.params;
   const { userId: adminId } = req.user as IRequestUser;
@@ -130,13 +144,14 @@ const likeReview = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const ReviewController = {
-  getAllReviews,
+  getAllReviewsAdmin,
   getPendingReviews,
   getReviewById,
   getMediaReviews,
   createReview,
   updateReview,
   deleteReview,
+  deleteReviewAdmin,
   approveReview,
   rejectReview,
   likeReview,

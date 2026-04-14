@@ -41,7 +41,7 @@ const reviewInclude = {
   },
 };
 
-const getAllApprovedReviewsFromDB = async (query: IQueryParams) => {
+const getAllReviewsForAdminFromDB = async (query: IQueryParams) => {
   const reviewQuery = new QueryBuilder<
     Review,
     Prisma.ReviewWhereInput,
@@ -51,11 +51,10 @@ const getAllApprovedReviewsFromDB = async (query: IQueryParams) => {
     filterableFields: ["status", "rating", "hasSpoiler", "userId", "mediaId"],
   })
     .filter()
-    .where({ status: ReviewStatus.APPROVED })
     .search()
     .sort()
-    .paginate()
-    .include(reviewInclude);
+    .paginate();
+  // .include(reviewInclude);
 
   return await reviewQuery.execute();
 };
@@ -209,6 +208,16 @@ const deleteReviewFromDB = async (reviewId: string, userId: string) => {
   await prisma.review.delete({ where: { id: reviewId } });
 };
 
+const deleteReviewByAdminFromDB = async (reviewId: string) => {
+  const review = await prisma.review.findUnique({ where: { id: reviewId } });
+
+  if (!review) {
+    throw new AppError(status.NOT_FOUND, "Review not found");
+  }
+
+  await prisma.review.delete({ where: { id: reviewId } });
+};
+
 const approveReviewIntoDB = async (reviewId: string, adminId: string) => {
   const review = await prisma.review.findUnique({ where: { id: reviewId } });
 
@@ -255,7 +264,8 @@ const approveReviewIntoDB = async (reviewId: string, adminId: string) => {
         userId: review.userId,
         type: NotificationType.REVIEW_APPROVED,
         title: "Your Review has been Approved",
-        message: "Congratulations! Your review has been approved and is now visible to the public.",
+        message:
+          "Congratulations! Your review has been approved and is now visible to the public.",
         link: `/reviews/${reviewId}`,
       },
     }),
@@ -372,13 +382,14 @@ const toggleLikeReviewIntoDB = async (reviewId: string, userId: string) => {
 };
 
 export const ReviewService = {
-  getAllApprovedReviewsFromDB,
+  getAllReviewsForAdminFromDB,
   getPendingReviewsFromDB,
   getReviewByIdFromDB,
   getMediaReviewsFromDB,
   createReviewIntoDB,
   updateReviewIntoDB,
   deleteReviewFromDB,
+  deleteReviewByAdminFromDB,
   approveReviewIntoDB,
   rejectReviewIntoDB,
   toggleLikeReviewIntoDB,

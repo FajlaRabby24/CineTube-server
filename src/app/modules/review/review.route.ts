@@ -9,7 +9,11 @@ import { ReviewValidation } from "./review.validation";
 
 const router = Router();
 
-router.get("/", ReviewController.getAllReviews);
+router.get(
+  "/admin",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  ReviewController.getAllReviewsAdmin,
+);
 
 router.get(
   "/pending",
@@ -31,6 +35,12 @@ router.patch(
   checkAuth(),
   validateRequest(ReviewValidation.updateReviewSchema),
   ReviewController.updateReview,
+);
+
+router.delete(
+  "/admin/:reviewId",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  ReviewController.deleteReviewAdmin,
 );
 
 router.delete("/:reviewId", checkAuth(), ReviewController.deleteReview);

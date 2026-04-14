@@ -95,36 +95,6 @@ const createMediaIntoDB = async (
 };
 
 const getAllMediaFromDB = async (query: Record<string, any>) => {
-  /**
-   *  {
-            "id": "cmnxld0z80000i0md4i36ph6e",
-            "title": "Inception",
-            "slug": "inception",
-            "synopsis": "A thief who steals corporate secrets...",
-            "type": "MOVIE",
-            "releaseYear": 2010,
-            "ageRating": "PG_13",
-            "duration": 148,
-            "totalSeasons": null,
-            "totalEpisodes": null,
-            "posterUrl": "https://example.com/poster.jpg",
-            "backdropUrl": "https://example.com/backdrop.jpg",
-            "trailerUrl": "https://youtube.com/watch?v=...",
-            "youtubeStreamUrl": "https://youtube.com/watch?v=...",
-            "imdbId": "tt1375666",
-            "language": "English",
-            "country": "USA",
-            "pricingType": "PREMIUM",
-            "status": "PUBLISHED",
-            "averageRating": 0,
-            "totalReviews": 0,
-            "totalViews": 0,
-            "isFeatured": false,
-            "isEditorsPick": true,
-            "isTrending": true,
-            "createdAt": "2026-04-13T19:34:27.380Z",
-            "updatedAt": "2026-04-13T19:34:27.380Z",
-   */
   const mediaQuery = new QueryBuilder<
     Media,
     Prisma.MediaWhereInput,
@@ -149,7 +119,7 @@ const getAllMediaFromDB = async (query: Record<string, any>) => {
       "id",
       "slug",
       "title",
-      "posterUrl",
+      "youtubeStreamUrl",
       "status",
       "type",
       "averageRating",
@@ -159,33 +129,7 @@ const getAllMediaFromDB = async (query: Record<string, any>) => {
   return await mediaQuery.execute();
 };
 
-// TODO: make in querybuilder
 const getMediaBySlugFromDB = async (slug: string) => {
-  // const result = await prisma.media.findUnique({
-  //   where: { slug },
-  //   include: {
-  //     genres: true,
-  //     platforms: true,
-  //     castMembers: true,
-  //     directors: true,
-  //     tags: {
-  //       include: {
-  //         tag: true,
-  //       },
-  //     },
-  //     reviews: {
-  //       where: { status: "APPROVED" },
-  //       include: {
-  //         user: {
-  //           select: { name: true, image: true },
-  //         },
-  //       },
-  //       take: 10,
-  //       orderBy: { createdAt: "desc" },
-  //     },
-  //   },
-  // });
-
   const mediaQuery = new QueryBuilder<
     Media,
     Prisma.MediaWhereInput,

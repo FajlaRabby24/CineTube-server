@@ -16,6 +16,21 @@ const getUserPayments = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "Payments retrieved successfully", result);
 });
 
+const getAllPayments = catchAsync(async (req: Request, res: Response) => {
+  const result = await PaymentService.getAllPaymentsFromDB(
+    req.query as IQueryParams,
+  );
+
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "Payments retrieved successfully",
+    result,
+  );
+});
+
 export const PaymentController = {
   getUserPayments,
+  getAllPayments,
 };

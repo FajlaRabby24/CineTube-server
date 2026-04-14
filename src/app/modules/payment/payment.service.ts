@@ -20,6 +20,35 @@ const getUserPaymentsFromDB = async (userId: string, query: IQueryParams) => {
   return await paymentQuery.execute();
 };
 
+const getAllPaymentsFromDB = async (query: IQueryParams) => {
+  const paymentQuery = new QueryBuilder<
+    Payment,
+    Prisma.PaymentWhereInput,
+    Prisma.PaymentInclude
+  >(prisma.payment, query, {
+    searchableFields: ["user.name", "user.email", "stripePaymentIntentId", "stripeInvoiceId"],
+    filterableFields: ["status", "plan", "userId"],
+  })
+    .filter()
+    .search()
+    .sort()
+    .paginate()
+    .include({
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      subscription: true,
+    });
+
+  return await paymentQuery.execute();
+};
+
 export const PaymentService = {
   getUserPaymentsFromDB,
+  getAllPaymentsFromDB,
 };

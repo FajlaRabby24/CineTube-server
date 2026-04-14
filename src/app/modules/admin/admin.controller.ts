@@ -12,7 +12,7 @@ const createAdmin = catchAsync(async (req: Request, res: Response) => {
 
 const getDashboardStats = catchAsync(async (req: Request, res: Response) => {
   const result = await AdminService.getDashboardStats();
-
+  console.log(result, "admin controller");
   sendResponse(
     res,
     status.OK,

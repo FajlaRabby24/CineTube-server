@@ -95,12 +95,42 @@ const createMediaIntoDB = async (
 };
 
 const getAllMediaFromDB = async (query: Record<string, any>) => {
+  /**
+   *  {
+            "id": "cmnxld0z80000i0md4i36ph6e",
+            "title": "Inception",
+            "slug": "inception",
+            "synopsis": "A thief who steals corporate secrets...",
+            "type": "MOVIE",
+            "releaseYear": 2010,
+            "ageRating": "PG_13",
+            "duration": 148,
+            "totalSeasons": null,
+            "totalEpisodes": null,
+            "posterUrl": "https://example.com/poster.jpg",
+            "backdropUrl": "https://example.com/backdrop.jpg",
+            "trailerUrl": "https://youtube.com/watch?v=...",
+            "youtubeStreamUrl": "https://youtube.com/watch?v=...",
+            "imdbId": "tt1375666",
+            "language": "English",
+            "country": "USA",
+            "pricingType": "PREMIUM",
+            "status": "PUBLISHED",
+            "averageRating": 0,
+            "totalReviews": 0,
+            "totalViews": 0,
+            "isFeatured": false,
+            "isEditorsPick": true,
+            "isTrending": true,
+            "createdAt": "2026-04-13T19:34:27.380Z",
+            "updatedAt": "2026-04-13T19:34:27.380Z",
+   */
   const mediaQuery = new QueryBuilder<
     Media,
     Prisma.MediaWhereInput,
     Prisma.MediaInclude
   >(prisma.media, query, {
-    searchableFields: ["title", "synopsis"],
+    searchableFields: ["title", "synopsis", "slug", "synopsis"],
     filterableFields: [
       "type",
       "pricingType",
@@ -115,53 +145,116 @@ const getAllMediaFromDB = async (query: Record<string, any>) => {
     .filter()
     .sort()
     .paginate()
-    .include({
-      genres: true,
-      platforms: true,
-      castMembers: true,
-      directors: true,
-      tags: {
-        include: {
-          tag: true,
-        },
-      },
-    });
+    .staticSelect([
+      "id",
+      "slug",
+      "title",
+      "posterUrl",
+      "status",
+      "type",
+      "averageRating",
+      "releaseYear",
+    ]);
 
   return await mediaQuery.execute();
 };
 
 // TODO: make in querybuilder
 const getMediaBySlugFromDB = async (slug: string) => {
-  const result = await prisma.media.findUnique({
-    where: { slug },
-    include: {
-      genres: true,
-      platforms: true,
-      castMembers: true,
-      directors: true,
-      tags: {
-        include: {
-          tag: true,
+  // const result = await prisma.media.findUnique({
+  //   where: { slug },
+  //   include: {
+  //     genres: true,
+  //     platforms: true,
+  //     castMembers: true,
+  //     directors: true,
+  //     tags: {
+  //       include: {
+  //         tag: true,
+  //       },
+  //     },
+  //     reviews: {
+  //       where: { status: "APPROVED" },
+  //       include: {
+  //         user: {
+  //           select: { name: true, image: true },
+  //         },
+  //       },
+  //       take: 10,
+  //       orderBy: { createdAt: "desc" },
+  //     },
+  //   },
+  // });
+
+  const mediaQuery = new QueryBuilder<
+    Media,
+    Prisma.MediaWhereInput,
+    Prisma.MediaInclude
+  >(
+    prisma.media,
+    {},
+    {
+      searchableFields: [],
+      filterableFields: [],
+    },
+  )
+    .search()
+    .where({
+      slug,
+    })
+    .filter()
+    .sort()
+    .include({
+      genres: {
+        select: {
+          id: true,
+          genre: true,
         },
       },
-      reviews: {
-        where: { status: "APPROVED" },
-        include: {
-          user: {
-            select: { name: true, image: true },
+      platforms: {
+        select: {
+          id: true,
+          platform: true,
+          streamUrl: true,
+        },
+      },
+      castMembers: {
+        select: {
+          id: true,
+          actorName: true,
+          character: true,
+          profileUrl: true,
+          orderIndex: true,
+        },
+      },
+      directors: {
+        select: {
+          id: true,
+          directorName: true,
+          profileUrl: true,
+        },
+      },
+      tags: {
+        select: {
+          id: true,
+          tag: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              createdAt: true,
+            },
           },
         },
-        take: 10,
-        orderBy: { createdAt: "desc" },
       },
-    },
-  });
+    })
+    .execute();
 
-  if (!result) {
+  if (!mediaQuery) {
     throw new AppError(status.NOT_FOUND, "Media not found");
   }
 
-  return result;
+  return mediaQuery;
 };
 
 const updateMediaInDB = async (

@@ -34,7 +34,7 @@ const getMediaBySlug = catchAsync(async (req: Request, res: Response) => {
     status.OK,
     true,
     "Media details retrieved successfully",
-    result,
+    result.data[0],
   );
 });
 

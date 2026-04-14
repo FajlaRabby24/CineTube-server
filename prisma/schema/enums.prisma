@@ -109,7 +109,6 @@ enum ReportReason {
 
 enum ReportStatus {
   PENDING
-  REVIEWED
   RESOLVED
   DISMISSED
 }

@@ -20,8 +20,6 @@ router.get(
   ReportController.getAllReportsFromDB,
 );
 
-
-
 router.patch(
   "/:reportId/resolve",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),

@@ -20,13 +20,15 @@ const createReport = catchAsync(async (req: Request, res: Response) => {
   );
 });
 
-const getPendingReports = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReportService.getPendingReportsFromDB(
+const getAllReportsFromDB = catchAsync(async (req: Request, res: Response) => {
+  const result = await ReportService.getAllReportsFromDB(
     req.query as IQueryParams,
   );
 
-  sendResponse(res, status.OK, true, "Reports retrieved successfully", result);
+  sendResponse(res, status.OK, true, "Reports retrieved successfully", result.data, result.meta);
 });
+
+
 
 const resolveReport = catchAsync(async (req: Request, res: Response) => {
   const { userId: adminId } = req.user as IRequestUser;
@@ -54,7 +56,7 @@ const dismissReport = catchAsync(async (req: Request, res: Response) => {
 
 export const ReportController = {
   createReport,
-  getPendingReports,
+  getAllReportsFromDB,
   resolveReport,
   dismissReport,
 };

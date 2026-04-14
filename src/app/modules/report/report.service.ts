@@ -79,17 +79,16 @@ const createReportIntoDB = async (
   return result;
 };
 
-const getPendingReportsFromDB = async (query: IQueryParams) => {
+const getAllReportsFromDB = async (query: IQueryParams) => {
   const reportQuery = new QueryBuilder<
     Report,
     Prisma.ReportWhereInput,
     Prisma.ReportInclude
   >(prisma.report, query, {
     searchableFields: [],
-    filterableFields: ["targetType", "reason"],
+    filterableFields: ["targetType", "reason", "status"],
   })
     .filter()
-    .where({ status: ReportStatus.PENDING })
     .sort()
     .paginate()
     .include({
@@ -128,6 +127,8 @@ const getPendingReportsFromDB = async (query: IQueryParams) => {
 
   return await reportQuery.execute();
 };
+
+
 
 const resolveReportFromDB = async (
   adminId: string,
@@ -206,7 +207,7 @@ const dismissReportFromDB = async (adminId: string, reportId: string) => {
 
 export const ReportService = {
   createReportIntoDB,
-  getPendingReportsFromDB,
+  getAllReportsFromDB,
   resolveReportFromDB,
   dismissReportFromDB,
 };

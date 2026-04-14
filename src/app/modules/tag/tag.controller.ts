@@ -23,8 +23,16 @@ const deleteTag = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "Tag deleted successfully", null);
 });
 
+const updateTag = catchAsync(async (req: Request, res: Response) => {
+  const { tagId } = req.params;
+  const result = await TagService.updateTagIntoDB(tagId as string, req.body);
+
+  sendResponse(res, status.OK, true, "Tag updated successfully", result);
+});
+
 export const TagController = {
   getAllTags,
   createTag,
+  updateTag,
   deleteTag,
 };

@@ -36,6 +36,47 @@ const createTagIntoDB = async (payload: { name: string; slug: string }) => {
   return result;
 };
 
+const updateTagIntoDB = async (
+  tagId: string,
+  payload: { name?: string; slug?: string },
+) => {
+  const tag = await prisma.tag.findUnique({ where: { id: tagId } });
+
+  if (!tag) {
+    throw new AppError(status.NOT_FOUND, "Tag not found");
+  }
+
+  if (payload.name || payload.slug) {
+    const existing = await prisma.tag.findFirst({
+      where: {
+        AND: [
+          { id: { not: tagId } },
+          {
+            OR: [
+              payload.name ? { name: payload.name } : {},
+              payload.slug ? { slug: payload.slug } : {},
+            ],
+          },
+        ],
+      },
+    });
+
+    if (existing) {
+      throw new AppError(
+        status.BAD_REQUEST,
+        "Tag with this name or slug already exists",
+      );
+    }
+  }
+
+  const result = await prisma.tag.update({
+    where: { id: tagId },
+    data: payload,
+  });
+
+  return result;
+};
+
 const deleteTagFromDB = async (tagId: string) => {
   const tag = await prisma.tag.findUnique({ where: { id: tagId } });
 
@@ -49,5 +90,6 @@ const deleteTagFromDB = async (tagId: string) => {
 export const TagService = {
   getAllTagsFromDB,
   createTagIntoDB,
+  updateTagIntoDB,
   deleteTagFromDB,
 };

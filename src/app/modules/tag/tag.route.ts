@@ -16,6 +16,13 @@ router.post(
   TagController.createTag,
 );
 
+router.patch(
+  "/:tagId",
+  checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+  validateRequest(TagValidation.updateTagSchema),
+  TagController.updateTag,
+);
+
 router.delete(
   "/:tagId",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),

@@ -26,7 +26,12 @@ const getAllPaymentsFromDB = async (query: IQueryParams) => {
     Prisma.PaymentWhereInput,
     Prisma.PaymentInclude
   >(prisma.payment, query, {
-    searchableFields: ["user.name", "user.email", "stripePaymentIntentId", "stripeInvoiceId"],
+    searchableFields: [
+      "user.name",
+      "user.email",
+      "stripePaymentIntentId",
+      "stripeInvoiceId",
+    ],
     filterableFields: ["status", "plan", "userId"],
   })
     .filter()

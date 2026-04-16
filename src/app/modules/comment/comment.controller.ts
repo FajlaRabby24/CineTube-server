@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import status from "http-status";
 import { IRequestUser } from "../../interfaces/requestUser.interface";
+import { IQueryParams } from "../../interfaces/query.interface";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { CommentService } from "./comment.service";
@@ -12,6 +13,23 @@ const getCommentsByReview = catchAsync(async (req: Request, res: Response) => {
   );
 
   sendResponse(res, status.OK, true, "Comments retrieved successfully", result);
+});
+
+const getUserComments = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user as IRequestUser;
+  const result = await CommentService.getUserCommentsFromDB(
+    userId,
+    req.query as IQueryParams,
+  );
+
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "User comments retrieved successfully",
+    result.data,
+    result.meta,
+  );
 });
 
 const createComment = catchAsync(async (req: Request, res: Response) => {
@@ -90,6 +108,7 @@ const likeComment = catchAsync(async (req: Request, res: Response) => {
 
 export const CommentController = {
   getCommentsByReview,
+  getUserComments,
   createComment,
   createReply,
   updateComment,

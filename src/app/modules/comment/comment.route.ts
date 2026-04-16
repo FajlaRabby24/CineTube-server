@@ -6,6 +6,8 @@ import { CommentValidation } from "./comment.validation";
 
 const router = Router();
 
+router.get("/", checkAuth(), CommentController.getUserComments);
+
 // Replies, Updates, and Deletions
 router.post(
   "/:commentId/reply",

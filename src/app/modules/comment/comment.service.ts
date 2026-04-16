@@ -3,6 +3,8 @@ import { NotificationType, Prisma } from "../../../generated/prisma/client";
 import { Role } from "../../../generated/prisma/enums";
 import AppError from "../../errorhandlers/AppError";
 import { prisma } from "../../lib/prisma";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { IQueryParams } from "../../interfaces/query.interface";
 
 const commentInclude = {
   user: {
@@ -73,6 +75,39 @@ const getCommentsByReviewFromDB = async (
     data: comments,
     meta: { page: 1, limit: 10, total: comments.length, totalPages: 1 },
   };
+};
+
+const getUserCommentsFromDB = async (userId: string, query: IQueryParams) => {
+  const commentQuery = new QueryBuilder<
+    any,
+    Prisma.CommentWhereInput,
+    Prisma.CommentInclude
+  >(prisma.comment as any, query, {
+    searchableFields: ["content"],
+    filterableFields: ["reviewId", "parentId"],
+  })
+    .filter()
+    .where({ userId, isDeleted: false })
+    .search()
+    .sort()
+    .paginate()
+    .include({
+      ...commentInclude,
+      review: {
+        select: {
+          id: true,
+          title: true,
+          media: {
+            select: {
+              title: true,
+              posterUrl: true,
+            },
+          },
+        },
+      },
+    });
+
+  return await commentQuery.execute();
 };
 
 const createCommentIntoDB = async (
@@ -285,6 +320,7 @@ const toggleLikeCommentIntoDB = async (userId: string, commentId: string) => {
 
 export const CommentService = {
   getCommentsByReviewFromDB,
+  getUserCommentsFromDB,
   createCommentIntoDB,
   createReplyIntoDB,
   updateCommentIntoDB,

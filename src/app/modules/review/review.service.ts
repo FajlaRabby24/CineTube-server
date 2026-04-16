@@ -59,6 +59,25 @@ const getAllReviewsForAdminFromDB = async (query: IQueryParams) => {
   return await reviewQuery.execute();
 };
 
+const getUserReviewsFromDB = async (userId: string, query: IQueryParams) => {
+  const reviewQuery = new QueryBuilder<
+    Review,
+    Prisma.ReviewWhereInput,
+    Prisma.ReviewInclude
+  >(prisma.review, query, {
+    searchableFields: ["content", "title", "media.title"],
+    filterableFields: ["status", "rating", "hasSpoiler", "mediaId"],
+  })
+    .filter()
+    .where({ userId })
+    .search()
+    .sort()
+    .paginate()
+    .include(reviewInclude);
+
+  return await reviewQuery.execute();
+};
+
 const getPendingReviewsFromDB = async (query: IQueryParams) => {
   const reviewQuery = new QueryBuilder<
     Review,
@@ -383,6 +402,7 @@ const toggleLikeReviewIntoDB = async (reviewId: string, userId: string) => {
 
 export const ReviewService = {
   getAllReviewsForAdminFromDB,
+  getUserReviewsFromDB,
   getPendingReviewsFromDB,
   getReviewByIdFromDB,
   getMediaReviewsFromDB,

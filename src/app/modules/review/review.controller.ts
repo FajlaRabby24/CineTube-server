@@ -21,6 +21,16 @@ const getAllReviewsAdmin = catchAsync(async (req: Request, res: Response) => {
   );
 });
 
+const getUserReviews = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user as IRequestUser;
+  const result = await ReviewService.getUserReviewsFromDB(
+    userId,
+    req.query as IQueryParams,
+  );
+
+  sendResponse(res, status.OK, true, "User reviews retrieved successfully", result.data, result.meta);
+});
+
 const getPendingReviews = catchAsync(async (req: Request, res: Response) => {
   const result = await ReviewService.getPendingReviewsFromDB(
     req.query as IQueryParams,
@@ -145,6 +155,7 @@ const likeReview = catchAsync(async (req: Request, res: Response) => {
 
 export const ReviewController = {
   getAllReviewsAdmin,
+  getUserReviews,
   getPendingReviews,
   getReviewById,
   getMediaReviews,

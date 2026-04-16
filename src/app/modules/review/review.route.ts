@@ -15,6 +15,8 @@ router.get(
   ReviewController.getAllReviewsAdmin,
 );
 
+router.get("/", checkAuth(), ReviewController.getUserReviews);
+
 router.get(
   "/pending",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),

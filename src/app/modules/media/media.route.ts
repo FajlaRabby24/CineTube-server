@@ -11,6 +11,7 @@ const router = Router();
 // Public routes
 router.get("/", MediaController.getAllMedia);
 router.get("/:slug", MediaController.getMediaBySlug);
+router.get("/:mediaId", MediaController.getMediaById);
 
 // Admin routes
 router.post(

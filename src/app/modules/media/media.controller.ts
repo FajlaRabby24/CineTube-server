@@ -38,6 +38,19 @@ const getMediaBySlug = catchAsync(async (req: Request, res: Response) => {
   );
 });
 
+const getMediaById = catchAsync(async (req: Request, res: Response) => {
+  const { mediaId } = req.params;
+  const result = await MediaService.getMediaByIdFromDB(mediaId as string);
+
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "Media details retrieved successfully",
+    result.data[0],
+  );
+});
+
 const updateMedia = catchAsync(async (req: Request, res: Response) => {
   const { mediaId } = req.params;
   const adminId = req.user.userId;
@@ -62,6 +75,7 @@ export const MediaController = {
   createMedia,
   getAllMedia,
   getMediaBySlug,
+  getMediaById,
   updateMedia,
   deleteMedia,
 };

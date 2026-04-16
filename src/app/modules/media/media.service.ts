@@ -202,6 +202,78 @@ const getMediaBySlugFromDB = async (slug: string) => {
   return mediaQuery;
 };
 
+const getMediaByIdFromDB = async (mediaId: string) => {
+  const mediaQuery = new QueryBuilder<
+    Media,
+    Prisma.MediaWhereInput,
+    Prisma.MediaInclude
+  >(
+    prisma.media,
+    {},
+    {
+      searchableFields: [],
+      filterableFields: [],
+    },
+  )
+    .search()
+    .where({
+      id: mediaId,
+    })
+    .filter()
+    .sort()
+    .include({
+      genres: {
+        select: {
+          id: true,
+          genre: true,
+        },
+      },
+      platforms: {
+        select: {
+          id: true,
+          platform: true,
+          streamUrl: true,
+        },
+      },
+      castMembers: {
+        select: {
+          id: true,
+          actorName: true,
+          character: true,
+          profileUrl: true,
+          orderIndex: true,
+        },
+      },
+      directors: {
+        select: {
+          id: true,
+          directorName: true,
+          profileUrl: true,
+        },
+      },
+      tags: {
+        select: {
+          id: true,
+          tag: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              createdAt: true,
+            },
+          },
+        },
+      },
+    })
+    .execute();
+
+  if (!mediaQuery) {
+    throw new AppError(status.NOT_FOUND, "Media not found");
+  }
+
+  return mediaQuery;
+};
+
 const updateMediaInDB = async (
   adminId: string,
   mediaId: string,
@@ -337,6 +409,7 @@ export const MediaService = {
   createMediaIntoDB,
   getAllMediaFromDB,
   getMediaBySlugFromDB,
+  getMediaByIdFromDB,
   updateMediaInDB,
   deleteMediaFromDB,
 };

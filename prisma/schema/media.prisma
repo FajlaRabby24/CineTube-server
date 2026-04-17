@@ -10,7 +10,6 @@ model Media {
   totalSeasons     Int? // series only
   totalEpisodes    Int? // series only
   youtubeStreamUrl String? // YouTube embed URL for streaming
-  imdbId           String? // optional IMDB reference
   language         String    @default("English")
   country          String?
 

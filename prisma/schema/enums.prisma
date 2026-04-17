@@ -7,6 +7,14 @@ enum Role {
 enum MediaType {
   MOVIE
   SERIES
+  TRAILER
+  EPISODE
+  SHORT
+  FUNNY
+  SPORT
+  MOTIVATIONAL
+  EDUCATIONAL
+  OTHER
 }
 
 enum ContentStatus {

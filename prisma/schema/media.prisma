@@ -33,8 +33,6 @@ model Media {
   // Relations
   genres           MediaGenre[]
   platforms        MediaPlatform[]
-  castMembers      MediaCast[]
-  directors        MediaDirector[]
   reviews          Review[]
   watchlistEntries Watchlist[]
   tags             MediaTag[]
@@ -72,31 +70,8 @@ model MediaPlatform {
   @@map("media_platform")
 }
 
-model MediaCast {
-  id         String  @id @default(cuid())
-  mediaId    String
-  actorName  String
-  character  String?
-  profileUrl String?
-  orderIndex Int     @default(0)
 
-  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
-  @@index([mediaId])
-  @@map("media_cast")
-}
-
-model MediaDirector {
-  id           String  @id @default(cuid())
-  mediaId      String
-  directorName String
-  profileUrl   String?
-
-  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-
-  @@index([mediaId])
-  @@map("media_director")
-}
 
 model Tag {
   id        String   @id @default(cuid())

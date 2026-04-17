@@ -64,10 +64,11 @@ const createMediaIntoDB = async (
 
     if (tags) {
       for (const tagName of tags) {
+        const tagSlug = slugify(tagName);
         const tag = await tx.tag.upsert({
-          where: { name: tagName },
+          where: { slug: tagSlug },
           update: {},
-          create: { name: tagName, slug: slugify(tagName) },
+          create: { name: tagName, slug: tagSlug },
         });
 
         await tx.mediaTag.create({
@@ -163,22 +164,6 @@ const getMediaBySlugFromDB = async (slug: string) => {
           streamUrl: true,
         },
       },
-      castMembers: {
-        select: {
-          id: true,
-          actorName: true,
-          character: true,
-          profileUrl: true,
-          orderIndex: true,
-        },
-      },
-      directors: {
-        select: {
-          id: true,
-          directorName: true,
-          profileUrl: true,
-        },
-      },
       tags: {
         select: {
           id: true,
@@ -233,22 +218,6 @@ const getMediaByIdFromDB = async (mediaId: string) => {
           id: true,
           platform: true,
           streamUrl: true,
-        },
-      },
-      castMembers: {
-        select: {
-          id: true,
-          actorName: true,
-          character: true,
-          profileUrl: true,
-          orderIndex: true,
-        },
-      },
-      directors: {
-        select: {
-          id: true,
-          directorName: true,
-          profileUrl: true,
         },
       },
       tags: {
@@ -324,34 +293,14 @@ const updateMediaInDB = async (
       });
     }
 
-    if (castMembers) {
-      await tx.mediaCast.deleteMany({ where: { mediaId } });
-      await tx.mediaCast.createMany({
-        data: castMembers.map((c: any, index: number) => ({
-          mediaId,
-          ...c,
-          orderIndex: index,
-        })),
-      });
-    }
-
-    if (directors) {
-      await tx.mediaDirector.deleteMany({ where: { mediaId } });
-      await tx.mediaDirector.createMany({
-        data: directors.map((d: any) => ({
-          mediaId,
-          ...d,
-        })),
-      });
-    }
-
     if (tags) {
       await tx.mediaTag.deleteMany({ where: { mediaId } });
       for (const tagName of tags) {
+        const tagSlug = slugify(tagName);
         const tag = await tx.tag.upsert({
-          where: { name: tagName },
+          where: { slug: tagSlug },
           update: {},
-          create: { name: tagName, slug: slugify(tagName) },
+          create: { name: tagName, slug: tagSlug },
         });
 
         await tx.mediaTag.create({

@@ -1,142 +1,78 @@
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        background-color: #000;
-        color: #ffffff;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 40px;
-        background-color: #0a0a0a;
-        border-radius: 20px;
-        border: 1px solid #1a1a1a;
-      }
-      .header {
-        text-align: center;
-        margin-bottom: 40px;
-      }
-      .logo {
-        font-size: 32px;
-        font-weight: 900;
-        color: #e50914;
-        letter-spacing: -1px;
-        text-transform: uppercase;
-        font-style: italic;
-      }
-      .content {
-        line-height: 1.6;
-        font-size: 16px;
-        color: #dddddd;
-      }
-      .content p {
-        color: #dddddd;
-      }
-      .greeting {
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        color: #ffffff;
-      }
-      .receipt-card {
-        background-color: #111;
-        padding: 30px;
-        border-radius: 15px;
-        border: 1px solid #222;
-        margin: 30px 0;
-      }
-      .row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 15px;
-        border-bottom: 1px solid #222;
-        padding-bottom: 10px;
-      }
-      .label {
-        color: #aaaaaa;
-        font-size: 14px;
-        text-transform: uppercase;
-        font-weight: bold;
-      }
-      .value {
-        color: #ffffff;
-        font-weight: bold;
-      }
-      .total {
-        font-size: 20px;
-        color: #e50914;
-        border-bottom: none;
-      }
-      .footer {
-        text-align: center;
-        color: #777777;
-        font-size: 12px;
-        margin-top: 40px;
-      }
-      .btn {
-        display: inline-block;
-        background-color: #e50914;
-        color: #ffffff;
-        font-weight: bold;
-        text-decoration: none;
-        padding: 15px 30px;
-        border-radius: 8px;
-        margin-top: 20px;
-      }
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; padding: 0; background-color: #000000; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        .wrapper { background: linear-gradient(180deg, #0d0d0d 0%, #000000 100%); padding: 40px 20px; text-align: center; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .header { padding: 40px 0; background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%); border-bottom: 1px solid #222; }
+        .logo { font-size: 36px; font-weight: 900; color: #e50914; letter-spacing: -2px; text-transform: uppercase; font-style: italic; }
+        .content { padding: 40px; text-align: left; }
+        .greeting { font-size: 28px; font-weight: bold; color: #ffffff; margin-bottom: 16px; }
+        .description { font-size: 16px; color: #aaaaaa; line-height: 1.6; margin-bottom: 30px; }
+        
+        /* Premium Card Effect */
+        .receipt-card { background: #141414; border: 1px solid #262626; border-radius: 16px; padding: 24px; position: relative; }
+        .receipt-row { display: table; width: 100%; padding: 12px 0; border-bottom: 1px solid #1f1f1f; }
+        .receipt-label { display: table-cell; font-size: 12px; font-weight: bold; color: #666666; text-transform: uppercase; letter-spacing: 1px; }
+        .receipt-value { display: table-cell; text-align: right; font-size: 14px; font-weight: bold; color: #ffffff; }
+        
+        .total-row { border-bottom: none; padding-top: 20px; }
+        .total-label { color: #e50914; font-size: 16px; }
+        .total-value { font-size: 24px; color: #ffffff; }
+        
+        .btn-wrapper { margin-top: 40px; text-align: center; }
+        .btn { display: inline-block; background: linear-gradient(180deg, #e50914 0%, #b20710 100%); color: #ffffff; font-weight: bold; text-decoration: none; padding: 18px 40px; border-radius: 12px; font-size: 16px; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3); }
+        
+        .footer { padding: 40px; text-align: center; color: #444444; font-size: 12px; }
+        .footer a { color: #666666; text-decoration: none; }
     </style>
-  </head>
-  <body>
-    <div style="padding: 40px 0">
-      <div class="container">
-        <div class="header">
-          <div class="logo">CineTube</div>
-        </div>
-        <div class="content">
-          <div class="greeting">Thanks for joining us, <%= userName %>!</div>
-          <p style="color: #dddddd;">
-            Your subscription is now active. Get ready for an unlimited
-            cinematic journey!
-          </p>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <div class="logo">CineTube</div>
+            </div>
+            <div class="content">
+                <div class="greeting" style="color: #ffffff;">Welcome to the Premiere, <%= userName %>!</div>
+                <p class="description" style="color: #aaaaaa;">Your subscription is now active. You have unlocked unlimited access to our entire cinematic library.</p>
+                
+                <div class="receipt-card">
+                    <div class="receipt-row">
+                        <div class="receipt-label">Subscription Plan</div>
+                        <div class="receipt-value"><%= planName %></div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">Account Email</div>
+                        <div class="receipt-value"><%= email %></div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">Billing Date</div>
+                        <div class="receipt-value"><%= date %></div>
+                    </div>
+                    <div class="receipt-row">
+                        <div class="receipt-label">Subscriber ID</div>
+                        <div class="receipt-value" style="font-family: monospace; color: #888;"><%= customerId %></div>
+                    </div>
+                    <div class="receipt-row total-row">
+                        <div class="receipt-label total-label" style="color: #e50914;">Total Bill</div>
+                        <div class="receipt-value total-value" style="color: #ffffff;"><%= totalBill %></div>
+                    </div>
+                </div>
 
-          <div class="receipt-card">
-            <div class="row">
-              <span class="label">Plan Name</span>
-              <span class="value"><%= planName %></span>
+                <div class="btn-wrapper">
+                    <a href="<%= envVars.FRONTEND_URL %>" class="btn">Start Watching Now</a>
+                </div>
             </div>
-            <div class="row">
-              <span class="label">Customer Email</span>
-              <span class="value"><%= email %></span>
+            <div class="footer">
+                &copy; <%= new Date().getFullYear() %> CineTube Cinema. All rights reserved.<br>
+                <a href="#">Terms of Service</a> &bull; <a href="#">Privacy Policy</a><br>
+                <div style="margin-top: 10px;">This receipt was sent to <%= email %> because of your recent CineTube subscription.</div>
             </div>
-            <div class="row">
-              <span class="label">Customer ID</span>
-              <span class="value" style="font-family: monospace; color: #ffffff;"
-                ><%= customerId %></span
-              >
-            </div>
-            <div class="row">
-              <span class="label">Date</span>
-              <span class="value"><%= date %></span>
-            </div>
-            <div class="row total">
-              <span class="label" style="color: #e50914">Total Bill</span>
-              <span class="value"><%= totalBill %></span>
-            </div>
-          </div>
-
-          <div style="text-align: center">
-            <a href="<%= envVars.FRONTEND_URL %>" class="btn"
-              >Start Watching Now</a
-            >
-          </div>
         </div>
-        <div class="footer">
-          &copy; <%= new Date().getFullYear() %> CineTube. All rights
-          reserved.<br />
-          You are receiving this email because you subscribed to a CineTube
-          plan.
-        </div>
-      </div>
     </div>
-  </body>
+</body>
 </html>

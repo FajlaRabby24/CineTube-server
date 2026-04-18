@@ -2,44 +2,51 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #000; color: #ffffff; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 0 auto; padding: 40px; background-color: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .logo { font-size: 32px; font-weight: 900; color: #e50914; letter-spacing: -1px; text-transform: uppercase; font-style: italic; }
-        .content { line-height: 1.6; font-size: 16px; color: #dddddd; }
-        .content p { color: #dddddd; }
-        .greeting { font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #ffffff; }
-        .notice-card { background-color: #111; padding: 30px; border-radius: 15px; border: 1px solid #222; margin: 30px 0; border-left: 4px solid #e50914; }
-        .footer { text-align: center; color: #777777; font-size: 12px; margin-top: 40px; }
-        .btn { display: inline-block; background-color: #333; color: #ffffff; font-weight: bold; text-decoration: none; padding: 15px 30px; border-radius: 8px; margin-top: 20px; }
+        body { margin: 0; padding: 0; background-color: #000000; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        .wrapper { background: linear-gradient(180deg, #0d0d0d 0%, #000000 100%); padding: 40px 20px; text-align: center; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .header { padding: 40px 0; background-color: #1a1a1a; border-bottom: 1px solid #222; }
+        .logo { font-size: 36px; font-weight: 900; color: #e50914; letter-spacing: -2px; text-transform: uppercase; font-style: italic; }
+        .content { padding: 40px; text-align: left; }
+        .greeting { font-size: 28px; font-weight: bold; color: #ffffff; margin-bottom: 16px; }
+        .description { font-size: 16px; color: #aaaaaa; line-height: 1.6; margin-bottom: 30px; }
+        
+        .notice-card { background: #141414; border: 1px solid #333; border-left: 4px solid #e50914; border-radius: 12px; padding: 24px; margin: 30px 0; }
+        .notice-title { font-size: 14px; font-weight: bold; color: #e50914; text-transform: uppercase; margin-bottom: 8px; }
+        .notice-text { font-size: 16px; color: #ffffff; line-height: 1.5; }
+        
+        .btn-wrapper { margin-top: 40px; text-align: center; }
+        .btn { display: inline-block; background: #333; color: #ffffff; font-weight: bold; text-decoration: none; padding: 15px 35px; border-radius: 10px; font-size: 15px; border: 1px solid #444; }
+        
+        .footer { padding: 40px; text-align: center; color: #444444; font-size: 12px; }
     </style>
 </head>
 <body>
-    <div style="padding: 40px 0;">
+    <div class="wrapper">
         <div class="container">
             <div class="header">
                 <div class="logo">CineTube</div>
             </div>
             <div class="content">
-                <div class="greeting">Subscription Cancelled</div>
-                <p style="color: #dddddd;">Hello <%= userName %>,</p>
-                <p style="color: #dddddd;">We're sorry to see you go! This email confirms that your subscription has been cancelled.</p>
+                <div class="greeting" style="color: #ffffff;">We're sorry to see you go.</div>
+                <p class="description" style="color: #aaaaaa;">This email confirms that your subscription has been cancelled. We've enjoyed having you as part of our audience.</p>
                 
                 <div class="notice-card">
-                    <strong style="color: #ffffff;">Access Expiry Date:</strong> <%= expiryDate %><br>
-                    <span style="color: #dddddd;">You will continue to have access to all premium features until your current billing period ends on this date.</span>
+                    <div class="notice-title" style="color: #e50914;">Access Expiry</div>
+                    <div class="notice-text" style="color: #ffffff;">Your premium access will remain active until <strong><%= expiryDate %></strong>. After this date, your account will revert to a Free plan.</div>
                 </div>
 
-                <p style="color: #dddddd;">Changed your mind? You can reactivate your subscription at any time from your account management page.</p>
+                <p class="description" style="color: #aaaaaa;">Changed your mind? You can reactivate your subscription at any time to resume uninterrupted streaming.</p>
 
-
-                <div style="text-align: center;">
+                <div class="btn-wrapper">
                     <a href="<%= envVars.FRONTEND_URL %>" class="btn">Return to CineTube</a>
                 </div>
             </div>
             <div class="footer">
-                &copy; <%= new Date().getFullYear() %> CineTube. All rights reserved.<br>
+                &copy; <%= new Date().getFullYear() %> CineTube Cinema. All rights reserved.<br>
+                You are receiving this because a cancellation was processed for your CineTube account.
             </div>
         </div>
     </div>

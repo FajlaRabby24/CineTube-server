@@ -2,42 +2,52 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #000; color: #ffffff; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 0 auto; padding: 40px; background-color: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .logo { font-size: 32px; font-weight: 900; color: #e50914; letter-spacing: -1px; text-transform: uppercase; font-style: italic; }
-        .content { line-height: 1.6; font-size: 16px; color: #dddddd; }
-        .content p { color: #dddddd; }
-        .greeting { font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #ffffff; }
-        .update-card { background-color: #111; padding: 30px; border-radius: 15px; border: 1px solid #222; margin: 30px 0; border-left: 4px solid #0070f3; }
-        .footer { text-align: center; color: #777777; font-size: 12px; margin-top: 40px; }
+        body { margin: 0; padding: 0; background-color: #000000; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        .wrapper { background: linear-gradient(180deg, #0d0d0d 0%, #000000 100%); padding: 40px 20px; text-align: center; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .header { padding: 40px 0; background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%); border-bottom: 1px solid #222; }
+        .logo { font-size: 36px; font-weight: 900; color: #e50914; letter-spacing: -2px; text-transform: uppercase; font-style: italic; }
+        .content { padding: 40px; text-align: left; }
+        .greeting { font-size: 28px; font-weight: bold; color: #ffffff; margin-bottom: 16px; }
+        .description { font-size: 16px; color: #aaaaaa; line-height: 1.6; margin-bottom: 30px; }
+        
+        .update-card { background: linear-gradient(135deg, #141414 0%, #1a1a1a 100%); border: 1px solid #262626; border-radius: 16px; padding: 30px; margin: 20px 0; border-top: 4px solid #0070f3; }
+        .plan-badge { display: inline-block; background: #0070f3; color: #ffffff; font-size: 12px; font-weight: bold; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; margin-bottom: 15px; }
+        .update-details { font-size: 18px; font-weight: bold; color: #ffffff; margin-bottom: 5px; }
+        .update-subtext { font-size: 14px; color: #666666; }
+        
+        .btn-wrapper { margin-top: 40px; text-align: center; }
+        .btn { display: inline-block; background: #e50914; color: #ffffff; font-weight: bold; text-decoration: none; padding: 18px 40px; border-radius: 12px; font-size: 16px; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3); }
+        
+        .footer { padding: 40px; text-align: center; color: #444444; font-size: 12px; }
     </style>
 </head>
 <body>
-    <div style="padding: 40px 0;">
+    <div class="wrapper">
         <div class="container">
             <div class="header">
                 <div class="logo">CineTube</div>
             </div>
             <div class="content">
-                <div class="greeting">Your Plan has been Updated!</div>
-                <p style="color: #dddddd;">Hello <%= userName %>,</p>
-                <p style="color: #dddddd;">This email confirms that your CineTube subscription has been successfully updated.</p>
+                <div class="greeting" style="color: #ffffff;">Enjoy your new features!</div>
+                <p class="description" style="color: #aaaaaa;">Your CineTube subscription has been successfully updated. Your new cinematic experience begins now.</p>
                 
                 <div class="update-card">
-                    <strong style="color: #ffffff;">New Plan:</strong> <%= newPlan %><br>
-                    <strong style="color: #ffffff;">Change Date:</strong> <%= date %><br>
-                    <br>
-                    <p style="color: #dddddd; margin: 0;">Your new billing amount and features are now active. Thank you for choosing CineTube!</p>
+                    <div class="plan-badge" style="background-color: #0070f3;">Updated Plan</div>
+                    <div class="update-details" style="color: #ffffff;"><%= newPlan %> Plan</div>
+                    <div class="update-subtext" style="color: #666666;">Effective from <%= date %></div>
+                    <p style="color: #dddddd; margin-top: 20px; line-height: 1.5;">Your billing cycle and feature access have been updated to reflect your new choice. We hope you enjoy the enhanced quality and selections!</p>
                 </div>
 
-                <div style="text-align: center;">
-                    <a href="<%= envVars.FRONTEND_URL %>" style="display: inline-block; background-color: #e50914; color: #fff; font-weight: bold; text-decoration: none; padding: 15px 30px; border-radius: 8px; margin-top: 20px;">Watch Now</a>
+                <div class="btn-wrapper">
+                    <a href="<%= envVars.FRONTEND_URL %>" class="btn">Watch Now</a>
                 </div>
             </div>
             <div class="footer">
-                &copy; <%= new Date().getFullYear() %> CineTube. All rights reserved.
+                &copy; <%= new Date().getFullYear() %> CineTube Cinema. All rights reserved.<br>
+                Thank you for being a valued member of our community.
             </div>
         </div>
     </div>

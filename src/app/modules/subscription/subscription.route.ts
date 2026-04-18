@@ -17,4 +17,10 @@ router.post(
 
 router.post("/cancel", checkAuth(), SubscriptionController.cancelSubscription);
 
+router.post(
+  "/create-customer-portal",
+  checkAuth(),
+  SubscriptionController.createCustomerPortal,
+);
+
 export const SubscriptionRoutes = router;

@@ -51,9 +51,17 @@ const handleWebhook = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "Webhook processed", null);
 });
 
+const createCustomerPortal = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.user as IRequestUser;
+  const result = await SubscriptionService.createCustomerPortalSession(userId);
+
+  sendResponse(res, status.OK, true, "Portal session created", result);
+});
+
 export const SubscriptionController = {
   getUserSubscription,
   createCheckout,
   cancelSubscription,
+  createCustomerPortal,
   handleWebhook,
 };

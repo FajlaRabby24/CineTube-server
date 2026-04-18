@@ -44,7 +44,32 @@ const createCheckoutSession = async (
     where: { userId },
   });
 
+  if (subscription && subscription.plan !== SubscriptionPlan.FREE) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `You already have an active ${subscription.plan} plan. Use Manage Subscription to change it.`,
+    );
+  }
+
   let customerId = subscription?.stripeCustomerId;
+
+  if (customerId) {
+    try {
+      // Verify if the customer actually exists in the current Stripe account
+      await stripe.customers.retrieve(customerId);
+    } catch (error: any) {
+      if (error.code === "resource_missing") {
+        // Customer was likely deleted from Stripe or we switched Stripe accounts
+        customerId = undefined;
+        await prisma.subscription.update({
+          where: { userId },
+          data: { stripeCustomerId: null },
+        });
+      } else {
+        throw error;
+      }
+    }
+  }
 
   if (!customerId) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -87,8 +112,8 @@ const createCheckoutSession = async (
         quantity: 1,
       },
     ],
-    success_url: `${envVars.FRONTEND_URL}/subscription/success`,
-    cancel_url: `${envVars.FRONTEND_URL}/subscription/cancel`,
+    success_url: `${envVars.FRONTEND_URL}/dashboard/payments/success`,
+    cancel_url: `${envVars.FRONTEND_URL}/dashboard/payments/cancel`,
     metadata: { userId, plan },
     subscription_data: {
       metadata: { userId, plan },
@@ -132,13 +157,33 @@ const cancelSubscription = async (userId: string) => {
   const updated = await prisma.subscription.update({
     where: { userId },
     data: {
+      status: SubscriptionStatus.CANCELLED,
       cancelAtPeriodEnd: true,
       cancelledAt: new Date(),
-      status: SubscriptionStatus.CANCELLED,
     },
   });
 
   return updated;
+};
+
+const createCustomerPortalSession = async (userId: string) => {
+  const subscription = await prisma.subscription.findUnique({
+    where: { userId },
+  });
+
+  if (!subscription?.stripeCustomerId) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      "Stripe customer not found for this user",
+    );
+  }
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: subscription.stripeCustomerId,
+    return_url: `${envVars.FRONTEND_URL}/dashboard/payments/success`,
+  });
+
+  return { url: session.url };
 };
 
 const handleWebhookEvent = async (event: Stripe.Event) => {
@@ -150,14 +195,6 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         const plan = session.metadata?.plan as SubscriptionPlan;
 
         if (!userId || !plan) break;
-
-        const alreadyProcessed = await prisma.payment.findUnique({
-          where: { stripePaymentIntentId: session.payment_intent as string },
-        });
-        if (alreadyProcessed) {
-          console.log(`Session ${session.id} already processed. Skipping`);
-          break;
-        }
 
         const subscriptionId = session.subscription as string;
         if (!subscriptionId) break;
@@ -172,46 +209,36 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
           cancel_at_period_end: boolean;
         };
 
-        await prisma.$transaction(async (tx) => {
-          await tx.subscription.update({
-            where: { userId },
-            data: {
-              plan,
-              status: SubscriptionStatus.ACTIVE,
-              stripeSubscriptionId: stripeSub.id,
-              stripePriceId: stripeSub.items.data[0]?.price.id ?? null,
-              currentPeriodStart: new Date(
-                stripeSub.current_period_start * 1000,
-              ),
-              currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
-              cancelAtPeriodEnd: false,
-              cancelledAt: null,
-            },
-          });
-
-          await tx.payment.create({
-            data: {
-              userId,
-              stripePaymentIntentId: session.payment_intent as string,
-              amount: session.amount_total ? session.amount_total / 100 : 0,
-              currency: session.currency ?? "usd",
-              status: PaymentStatus.SUCCEEDED,
-              plan,
-              description: `${plan} subscription`,
-            },
-          });
+        await prisma.subscription.update({
+          where: { userId },
+          data: {
+            plan,
+            status: SubscriptionStatus.ACTIVE,
+            stripeSubscriptionId: stripeSub.id,
+            stripePriceId: stripeSub.items.data[0]?.price.id ?? null,
+            currentPeriodStart: stripeSub.current_period_start
+              ? new Date(stripeSub.current_period_start * 1000)
+              : new Date(),
+            currentPeriodEnd: stripeSub.current_period_end
+              ? new Date(stripeSub.current_period_end * 1000)
+              : new Date(),
+            cancelAtPeriodEnd: stripeSub.cancel_at_period_end || false,
+            cancelledAt: null,
+          },
         });
+
+        console.log(
+          `Subscription ${stripeSub.id} activated for user ${userId}`,
+        );
         break;
       } catch (error) {
-        console.log(error);
+        console.error("Webhook (session.completed) error:", error);
       }
     }
 
     case "invoice.payment_succeeded": {
       try {
         const invoice = event.data.object as Stripe.Invoice;
-
-        if (invoice.billing_reason === "subscription_create") break;
 
         const stripeSubscriptionId = (
           invoice as unknown as { subscription: string }
@@ -226,10 +253,21 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
           break;
         }
 
-        const subscription = await prisma.subscription.findFirst({
+        let subscription = await prisma.subscription.findFirst({
           where: { stripeSubscriptionId },
         });
-        if (!subscription) break;
+
+        // Fallback: If subscription ID isn't linked yet, find by customer ID
+        if (!subscription && invoice.customer) {
+          subscription = await prisma.subscription.findFirst({
+            where: { stripeCustomerId: invoice.customer as string },
+          });
+        }
+
+        if (!subscription) {
+          console.warn(`No subscription found for invoice ${invoice.id}`);
+          break;
+        }
 
         const stripeSub = (await stripe.subscriptions.retrieve(
           stripeSubscriptionId,
@@ -244,10 +282,13 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             where: { id: subscription.id },
             data: {
               status: SubscriptionStatus.ACTIVE,
-              currentPeriodStart: new Date(
-                stripeSub.current_period_start * 1000,
-              ),
-              currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+              stripeSubscriptionId: stripeSubscriptionId, // Ensure it's linked
+              currentPeriodStart: stripeSub.current_period_start
+                ? new Date(stripeSub.current_period_start * 1000)
+                : subscription.currentPeriodStart,
+              currentPeriodEnd: stripeSub.current_period_end
+                ? new Date(stripeSub.current_period_end * 1000)
+                : subscription.currentPeriodEnd,
               cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
             },
           });
@@ -264,10 +305,11 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
               description: `${subscription.plan} subscription renewal`,
             },
           });
+          console.log(`Payment record created for invoice ${invoice.id}`);
         });
         break;
       } catch (error) {
-        console.log(error);
+        console.error("Webhook (invoice.payment_succeeded) error:", error);
       }
     }
 
@@ -345,8 +387,12 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
           where: { id: subscription.id },
           data: {
             status: newStatus,
-            currentPeriodStart: new Date(stripeSub.current_period_start * 1000),
-            currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+            currentPeriodStart: stripeSub.current_period_start
+              ? new Date(stripeSub.current_period_start * 1000)
+              : subscription.currentPeriodStart,
+            currentPeriodEnd: stripeSub.current_period_end
+              ? new Date(stripeSub.current_period_end * 1000)
+              : subscription.currentPeriodEnd,
             cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
             cancelledAt: stripeSub.canceled_at
               ? new Date(stripeSub.canceled_at * 1000)
@@ -387,5 +433,6 @@ export const SubscriptionService = {
   getUserSubscriptionFromDB,
   createCheckoutSession,
   cancelSubscription,
+  createCustomerPortalSession,
   handleWebhookEvent,
 };

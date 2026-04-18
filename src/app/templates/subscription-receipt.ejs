@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #000; color: #ffffff; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 40px; background-color: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .logo { font-size: 32px; font-weight: 900; color: #e50914; letter-spacing: -1px; text-transform: uppercase; font-style: italic; }
+        .content { line-height: 1.6; font-size: 16px; color: #dddddd; }
+        .content p { color: #dddddd; }
+        .greeting { font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #ffffff; }
+        .receipt-card { background-color: #111; padding: 30px; border-radius: 15px; border: 1px solid #222; margin: 30px 0; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .label { color: #aaaaaa; font-size: 14px; text-transform: uppercase; font-weight: bold; }
+        .value { color: #ffffff; font-weight: bold; }
+        .total { font-size: 20px; color: #e50914; border-bottom: none; }
+        .footer { text-align: center; color: #777777; font-size: 12px; margin-top: 40px; }
+        .btn { display: inline-block; background-color: #e50914; color: #ffffff; font-weight: bold; text-decoration: none; padding: 15px 30px; border-radius: 8px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div style="padding: 40px 0;">
+        <div class="container">
+            <div class="header">
+                <div class="logo">CineTube</div>
+            </div>
+            <div class="content">
+                <div class="greeting">Thanks for joining us, <%= userName %>!</div>
+                <p>Your subscription is now active. Get ready for an unlimited cinematic journey!</p>
+                
+                <div class="receipt-card">
+                    <div class="row">
+                        <span class="label">Plan Name</span>
+                        <span class="value"><%= planName %></span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Customer Email</span>
+                        <span class="value"><%= email %></span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Customer ID</span>
+                        <span class="value" style="font-family: monospace;"><%= customerId %></span>
+                    </div>
+                    <div class="row">
+                        <span class="label">Date</span>
+                        <span class="value"><%= date %></span>
+                    </div>
+                    <div class="row total">
+                        <span class="label" style="color: #e50914;">Total Bill</span>
+                        <span class="value"><%= totalBill %></span>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">
+                    <a href="<%= envVars.FRONTEND_URL %>" class="btn">Start Watching Now</a>
+                </div>
+            </div>
+            <div class="footer">
+                &copy; <%= new Date().getFullYear() %> CineTube. All rights reserved.<br>
+                You are receiving this email because you subscribed to a CineTube plan.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

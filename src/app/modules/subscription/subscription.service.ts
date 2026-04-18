@@ -9,6 +9,7 @@ import { envVars } from "../../config/env.js";
 import { stripe } from "../../config/stripe.config";
 import AppError from "../../errorhandlers/AppError.js";
 import { prisma } from "../../lib/prisma.js";
+import { sendEmail } from "../../utils/email";
 
 const getUserSubscriptionFromDB = async (userId: string) => {
   const subscription = await prisma.subscription.findUnique({
@@ -161,7 +162,21 @@ const cancelSubscription = async (userId: string) => {
       cancelAtPeriodEnd: true,
       cancelledAt: new Date(),
     },
+    include: { user: true },
   });
+
+  if (updated.user?.email) {
+    sendEmail({
+      to: updated.user.email,
+      subject: "CineTube Subscription Cancelled",
+      templateName: "subscription-cancel-notice",
+      templateData: {
+        userName: updated.user.name || "User",
+        expiryDate: updated.currentPeriodEnd.toLocaleDateString(),
+        envVars,
+      },
+    }).catch((err) => console.error("Email send error:", err));
+  }
 
   return updated;
 };
@@ -187,6 +202,7 @@ const createCustomerPortalSession = async (userId: string) => {
 };
 
 const handleWebhookEvent = async (event: Stripe.Event) => {
+  console.log({ eventType: event.type });
   switch (event.type) {
     case "checkout.session.completed": {
       try {
@@ -234,6 +250,7 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
       } catch (error) {
         console.error("Webhook (session.completed) error:", error);
       }
+      break;
     }
 
     case "invoice.payment_succeeded": {
@@ -306,6 +323,27 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             },
           });
           console.log(`Payment record created for invoice ${invoice.id}`);
+
+          // Send receipt email
+          const user = await tx.user.findUnique({
+            where: { id: subscription.userId },
+          });
+          if (user?.email) {
+            sendEmail({
+              to: user.email,
+              subject: "Your CineTube Receipt",
+              templateName: "subscription-receipt",
+              templateData: {
+                userName: user.name || "Customer",
+                email: user.email,
+                totalBill: `${(invoice.amount_paid / 100).toFixed(2)} ${invoice.currency.toUpperCase()}`,
+                customerId: invoice.customer as string,
+                planName: subscription.plan,
+                date: new Date().toLocaleDateString(),
+                envVars,
+              },
+            }).catch((err) => console.error("Email send error:", err));
+          }
         });
         break;
       } catch (error) {
@@ -365,6 +403,9 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
 
         const subscription = await prisma.subscription.findFirst({
           where: { stripeSubscriptionId: stripeSub.id },
+          include: {
+            user: true,
+          },
         });
         if (!subscription) break;
 
@@ -398,7 +439,23 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
               ? new Date(stripeSub.canceled_at * 1000)
               : null,
           },
+          include: { user: true },
         });
+
+        // Send Update Email
+        if (subscription.user?.email) {
+          sendEmail({
+            to: subscription.user.email,
+            subject: "CineTube Plan Updated",
+            templateName: "subscription-update-notice",
+            templateData: {
+              userName: subscription.user.name || "User",
+              newPlan: subscription.plan,
+              date: new Date().toLocaleDateString(),
+              envVars,
+            },
+          }).catch((err) => console.error("Email send error:", err));
+        }
         break;
       } catch (error) {
         console.log(error);

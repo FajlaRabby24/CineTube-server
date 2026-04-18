@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #000; color: #ffffff; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 40px; background-color: #0a0a0a; border-radius: 20px; border: 1px solid #1a1a1a; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .logo { font-size: 32px; font-weight: 900; color: #e50914; letter-spacing: -1px; text-transform: uppercase; font-style: italic; }
+        .content { line-height: 1.6; font-size: 16px; color: #dddddd; }
+        .content p { color: #dddddd; }
+        .greeting { font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #ffffff; }
+        .update-card { background-color: #111; padding: 30px; border-radius: 15px; border: 1px solid #222; margin: 30px 0; border-left: 4px solid #0070f3; }
+        .footer { text-align: center; color: #777777; font-size: 12px; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <div style="padding: 40px 0;">
+        <div class="container">
+            <div class="header">
+                <div class="logo">CineTube</div>
+            </div>
+            <div class="content">
+                <div class="greeting">Your Plan has been Updated!</div>
+                <p>Hello <%= userName %>,</p>
+                <p>This email confirms that your CineTube subscription has been successfully updated.</p>
+                
+                <div class="update-card">
+                    <strong>New Plan:</strong> <%= newPlan %><br>
+                    <strong>Change Date:</strong> <%= date %><br>
+                    <br>
+                    Your new billing amount and features are now active. Thank you for choosing CineTube!
+                </div>
+
+                <div style="text-align: center;">
+                    <a href="<%= envVars.FRONTEND_URL %>" style="display: inline-block; background-color: #e50914; color: #fff; font-weight: bold; text-decoration: none; padding: 15px 30px; border-radius: 8px; margin-top: 20px;">Watch Now</a>
+                </div>
+            </div>
+            <div class="footer">
+                &copy; <%= new Date().getFullYear() %> CineTube. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

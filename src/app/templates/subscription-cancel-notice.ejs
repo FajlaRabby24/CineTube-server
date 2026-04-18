@@ -23,15 +23,16 @@
             </div>
             <div class="content">
                 <div class="greeting">Subscription Cancelled</div>
-                <p>Hello <%= userName %>,</p>
-                <p>We're sorry to see you go! This email confirms that your subscription has been cancelled.</p>
+                <p style="color: #dddddd;">Hello <%= userName %>,</p>
+                <p style="color: #dddddd;">We're sorry to see you go! This email confirms that your subscription has been cancelled.</p>
                 
                 <div class="notice-card">
-                    <strong>Access Expiry Date:</strong> <%= expiryDate %><br>
-                    You will continue to have access to all premium features until your current billing period ends on this date.
+                    <strong style="color: #ffffff;">Access Expiry Date:</strong> <%= expiryDate %><br>
+                    <span style="color: #dddddd;">You will continue to have access to all premium features until your current billing period ends on this date.</span>
                 </div>
 
-                <p>Changed your mind? You can reactivate your subscription at any time from your account management page.</p>
+                <p style="color: #dddddd;">Changed your mind? You can reactivate your subscription at any time from your account management page.</p>
+
 
                 <div style="text-align: center;">
                     <a href="<%= envVars.FRONTEND_URL %>" class="btn">Return to CineTube</a>

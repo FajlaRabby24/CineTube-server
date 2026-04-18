@@ -202,7 +202,7 @@ const createCustomerPortalSession = async (userId: string) => {
 };
 
 const handleWebhookEvent = async (event: Stripe.Event) => {
-  console.log({ eventType: event.type });
+  // console.log({ eventType: event.type });
   switch (event.type) {
     case "checkout.session.completed": {
       try {
@@ -246,7 +246,6 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         console.log(
           `Subscription ${stripeSub.id} activated for user ${userId}`,
         );
-        break;
       } catch (error) {
         console.error("Webhook (session.completed) error:", error);
       }
@@ -255,12 +254,32 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
 
     case "invoice.payment_succeeded": {
       try {
+        console.log("start of invoice.payment_succeeded");
         const invoice = event.data.object as Stripe.Invoice;
+        let stripeSubscriptionId =
+          typeof (invoice as any).subscription === "string"
+            ? (invoice as any).subscription
+            : (invoice as any).subscription?.id;
 
-        const stripeSubscriptionId = (
-          invoice as unknown as { subscription: string }
-        ).subscription;
-        if (!stripeSubscriptionId) break;
+        // Fallback: Check invoice lines if root subscription is missing
+        if (!stripeSubscriptionId && invoice.lines?.data?.[0]) {
+          stripeSubscriptionId = (invoice.lines.data[0] as any).subscription;
+          if (stripeSubscriptionId) {
+            console.log(
+              `[Webhook] Found subscription ID in invoice lines: ${stripeSubscriptionId}`,
+            );
+          }
+        }
+
+        const stripeCustomerId =
+          typeof (invoice as any).customer === "string"
+            ? (invoice as any).customer
+            : (invoice as any).customer?.id;
+
+        console.log(`[Webhook] Processing invoice: ${invoice.id}`, {
+          stripeSubscriptionId,
+          stripeCustomerId,
+        });
 
         const alreadyProcessed = await prisma.payment.findFirst({
           where: { stripeInvoiceId: invoice.id },
@@ -271,23 +290,41 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         }
 
         let subscription = await prisma.subscription.findFirst({
-          where: { stripeSubscriptionId },
+          where: stripeSubscriptionId
+            ? { stripeSubscriptionId }
+            : { id: "none" },
         });
 
-        // Fallback: If subscription ID isn't linked yet, find by customer ID
-        if (!subscription && invoice.customer) {
+        // Fallback: If subscription ID isn't found or missing, find by customer ID
+        if (!subscription && stripeCustomerId) {
+          console.log(
+            `[Webhook] Subscription ID missing or not matched. Trying Customer ID fallback: ${stripeCustomerId}`,
+          );
           subscription = await prisma.subscription.findFirst({
-            where: { stripeCustomerId: invoice.customer as string },
+            where: { stripeCustomerId },
           });
         }
 
         if (!subscription) {
-          console.warn(`No subscription found for invoice ${invoice.id}`);
+          console.warn(
+            `[Webhook] No subscription record found for invoice ${invoice.id}. Skipping.`,
+          );
+          break;
+        }
+
+        // If we found it via customer but had no ID from invoice, use the one from DB
+        const finalSubscriptionId =
+          stripeSubscriptionId || subscription.stripeSubscriptionId;
+
+        if (!finalSubscriptionId) {
+          console.warn(
+            `[Webhook] Could not determine subscription ID for invoice ${invoice.id}. skipping.`,
+          );
           break;
         }
 
         const stripeSub = (await stripe.subscriptions.retrieve(
-          stripeSubscriptionId,
+          finalSubscriptionId,
         )) as unknown as {
           current_period_start: number;
           current_period_end: number;
@@ -299,7 +336,7 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             where: { id: subscription.id },
             data: {
               status: SubscriptionStatus.ACTIVE,
-              stripeSubscriptionId: stripeSubscriptionId, // Ensure it's linked
+              stripeSubscriptionId: finalSubscriptionId, // Ensure it's linked
               currentPeriodStart: stripeSub.current_period_start
                 ? new Date(stripeSub.current_period_start * 1000)
                 : subscription.currentPeriodStart,
@@ -345,20 +382,30 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             }).catch((err) => console.error("Email send error:", err));
           }
         });
+        console.log(`Invoice ${invoice.id} processed successfully`);
+        console.log("end of invoice.payment_succeeded");
         break;
       } catch (error) {
         console.error("Webhook (invoice.payment_succeeded) error:", error);
       }
+      break;
     }
 
     //
     case "invoice.payment_failed": {
       try {
         const invoice = event.data.object as Stripe.Invoice;
-        const stripeSubscriptionId = (
-          invoice as unknown as { subscription: string }
-        ).subscription;
-        if (!stripeSubscriptionId) break;
+        const stripeSubscriptionId =
+          typeof (invoice as any).subscription === "string"
+            ? (invoice as any).subscription
+            : (invoice as any).subscription?.id;
+
+        if (!stripeSubscriptionId) {
+          console.warn(
+            `[Webhook] Failed invoice ${invoice.id} has no subscription ID. Skipping.`,
+          );
+          break;
+        }
 
         const subscription = await prisma.subscription.findFirst({
           where: { stripeSubscriptionId },
@@ -386,8 +433,9 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         });
         break;
       } catch (error) {
-        console.log(error);
+        console.error("Webhook (invoice.payment_failed) error:", error);
       }
+      break;
     }
 
     case "customer.subscription.updated": {
@@ -458,8 +506,9 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         }
         break;
       } catch (error) {
-        console.log(error);
+        console.error("Webhook (subscription.updated) error:", error);
       }
+      break;
     }
 
     case "customer.subscription.deleted": {
@@ -477,15 +526,15 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         });
         break;
       } catch (error) {
-        console.log(error);
+        console.error("Webhook (subscription.deleted) error:", error);
       }
+      break;
     }
 
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+    // console.log(`Unhandled event type: ${event.type}`);
   }
 };
-
 export const SubscriptionService = {
   getUserSubscriptionFromDB,
   createCheckoutSession,

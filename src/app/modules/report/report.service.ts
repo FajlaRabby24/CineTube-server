@@ -128,8 +128,6 @@ const getAllReportsFromDB = async (query: IQueryParams) => {
   return await reportQuery.execute();
 };
 
-
-
 const resolveReportFromDB = async (
   adminId: string,
   reportId: string,
@@ -162,8 +160,9 @@ const resolveReportFromDB = async (
         data: { status: ReviewStatus.REJECTED },
       });
     } else if (report.targetType === ReportTargetType.COMMENT) {
-      await tx.comment.delete({
+      await tx.comment.update({
         where: { id: report.targetId },
+        data: { isDeleted: true },
       });
     }
 

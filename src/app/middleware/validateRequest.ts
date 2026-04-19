@@ -3,7 +3,6 @@ import z from "zod";
 
 export const validateRequest = (zodSchema: z.ZodObject) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body, "validate request");
     try {
       if (req.body?.data) {
         req.body = JSON.parse(req.body.data);

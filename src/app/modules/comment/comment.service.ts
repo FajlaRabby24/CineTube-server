@@ -2,9 +2,9 @@ import status from "http-status";
 import { NotificationType, Prisma } from "../../../generated/prisma/client";
 import { Role } from "../../../generated/prisma/enums";
 import AppError from "../../errorhandlers/AppError";
+import { IQueryParams } from "../../interfaces/query.interface";
 import { prisma } from "../../lib/prisma";
 import { QueryBuilder } from "../../utils/QueryBuilder";
-import { IQueryParams } from "../../interfaces/query.interface";
 
 const commentInclude = {
   user: {
@@ -20,26 +20,6 @@ const commentInclude = {
       likes: true,
       replies: true,
     },
-  },
-  replies: {
-    where: { isDeleted: false },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-        },
-      },
-      _count: {
-        select: {
-          likes: true,
-          replies: true,
-        },
-      },
-    },
-    orderBy: { createdAt: Prisma.SortOrder.asc },
   },
 };
 
@@ -100,7 +80,6 @@ const getUserCommentsFromDB = async (userId: string, query: IQueryParams) => {
           media: {
             select: {
               title: true,
-              posterUrl: true,
             },
           },
         },

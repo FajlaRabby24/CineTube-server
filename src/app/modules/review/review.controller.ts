@@ -28,7 +28,14 @@ const getUserReviews = catchAsync(async (req: Request, res: Response) => {
     req.query as IQueryParams,
   );
 
-  sendResponse(res, status.OK, true, "User reviews retrieved successfully", result.data, result.meta);
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "User reviews retrieved successfully",
+    result.data,
+    result.meta,
+  );
 });
 
 const getPendingReviews = catchAsync(async (req: Request, res: Response) => {
@@ -64,13 +71,15 @@ const getMediaReviews = catchAsync(async (req: Request, res: Response) => {
     status.OK,
     true,
     "Media reviews retrieved successfully",
-    result,
+    result.data,
+    result.meta,
   );
 });
 
 const createReview = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as IRequestUser;
   const { mediaId } = req.params;
+  console.log(req.body, userId, mediaId, "review controller");
   const result = await ReviewService.createReviewIntoDB(
     userId,
     mediaId as string,

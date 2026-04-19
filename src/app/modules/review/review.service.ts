@@ -16,7 +16,63 @@ import {
   IUpdateReviewPayload,
 } from "./review.type.js";
 
-const reviewInclude = {
+const getAllReviewsForAdminFromDB = async (query: IQueryParams) => {
+  const reviewQuery = new QueryBuilder<
+    Review,
+    Prisma.ReviewWhereInput,
+    Prisma.ReviewInclude
+  >(prisma.review, query, {
+    searchableFields: ["content", "title", "user.name", "media.title"],
+    filterableFields: ["status", "rating", "hasSpoiler", "userId", "mediaId"],
+  })
+    .filter()
+    .search()
+    .sort()
+    .paginate()
+    .include({
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      media: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+      },
+      _count: {
+        select: {
+          likes: true,
+          comments: true,
+        },
+      },
+    });
+
+  return await reviewQuery.execute();
+};
+
+const getUserReviewsFromDB = async (userId: string, query: IQueryParams) => {
+  const reviewQuery = new QueryBuilder<
+    Review,
+    Prisma.ReviewWhereInput,
+    Prisma.ReviewInclude
+  >(prisma.review, query, {
+    searchableFields: ["content", "title", "media.title"],
+    filterableFields: ["status", "rating", "hasSpoiler", "mediaId"],
+  })
+
+    .filter()
+    .where({ userId })
+    .search()
+    .sort()
+    .paginate()
+    /**
+   * {
   user: {
     select: {
       id: true,
@@ -39,41 +95,31 @@ const reviewInclude = {
       comments: true,
     },
   },
-};
-
-const getAllReviewsForAdminFromDB = async (query: IQueryParams) => {
-  const reviewQuery = new QueryBuilder<
-    Review,
-    Prisma.ReviewWhereInput,
-    Prisma.ReviewInclude
-  >(prisma.review, query, {
-    searchableFields: ["content", "title", "user.name", "media.title"],
-    filterableFields: ["status", "rating", "hasSpoiler", "userId", "mediaId"],
-  })
-    .filter()
-    .search()
-    .sort()
-    .paginate();
-  // .include(reviewInclude);
-
-  return await reviewQuery.execute();
-};
-
-const getUserReviewsFromDB = async (userId: string, query: IQueryParams) => {
-  const reviewQuery = new QueryBuilder<
-    Review,
-    Prisma.ReviewWhereInput,
-    Prisma.ReviewInclude
-  >(prisma.review, query, {
-    searchableFields: ["content", "title", "media.title"],
-    filterableFields: ["status", "rating", "hasSpoiler", "mediaId"],
-  })
-    .filter()
-    .where({ userId })
-    .search()
-    .sort()
-    .paginate()
-    .include(reviewInclude);
+}
+   */
+    .include({
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      media: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+      },
+      _count: {
+        select: {
+          likes: true,
+          comments: true,
+        },
+      },
+    });
 
   return await reviewQuery.execute();
 };
@@ -87,12 +133,35 @@ const getPendingReviewsFromDB = async (query: IQueryParams) => {
     searchableFields: ["content", "title", "user.name", "media.title"],
     filterableFields: ["status", "rating", "hasSpoiler", "userId", "mediaId"],
   })
+
     .filter()
     .where({ status: ReviewStatus.PENDING })
     .search()
     .sort()
     .paginate()
-    .include(reviewInclude);
+    .include({
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      media: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+      },
+      _count: {
+        select: {
+          likes: true,
+          comments: true,
+        },
+      },
+    });
 
   return await reviewQuery.execute();
 };
@@ -100,7 +169,29 @@ const getPendingReviewsFromDB = async (query: IQueryParams) => {
 const getReviewByIdFromDB = async (id: string) => {
   const result = await prisma.review.findUnique({
     where: { id },
-    include: reviewInclude,
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      media: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+      },
+      _count: {
+        select: {
+          likes: true,
+          comments: true,
+        },
+      },
+    },
   });
 
   if (!result) {
@@ -124,7 +215,29 @@ const getMediaReviewsFromDB = async (mediaId: string, query: IQueryParams) => {
     .search()
     .sort()
     .paginate()
-    .include(reviewInclude);
+    .include({
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      media: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+      },
+      _count: {
+        select: {
+          likes: true,
+          comments: true,
+        },
+      },
+    });
 
   return await reviewQuery.execute();
 };
@@ -157,9 +270,31 @@ const createReviewIntoDB = async (
       title: payload.title ?? null,
       content: payload.content,
       hasSpoiler: payload.hasSpoiler ?? false,
-      status: ReviewStatus.PENDING,
+      status: ReviewStatus.APPROVED,
     },
-    include: reviewInclude,
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      media: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+      },
+      _count: {
+        select: {
+          likes: true,
+          comments: true,
+        },
+      },
+    },
   });
 
   return result;
@@ -204,7 +339,29 @@ const updateReviewIntoDB = async (
       publishedAt: null,
       rejectedReason: null,
     },
-    include: reviewInclude,
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      media: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+      },
+      _count: {
+        select: {
+          likes: true,
+          comments: true,
+        },
+      },
+    },
   });
 
   return result;
@@ -261,7 +418,29 @@ const approveReviewIntoDB = async (reviewId: string, adminId: string) => {
         publishedAt: new Date(),
         moderatedBy: adminId,
       },
-      include: reviewInclude,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+        media: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
     }),
     prisma.media.update({
       where: { id: review.mediaId },
@@ -316,7 +495,29 @@ const rejectReviewIntoDB = async (
         rejectedReason: payload.reason,
         moderatedBy: adminId,
       },
-      include: reviewInclude,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+        media: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
     });
 
     await tx.auditLog.create({

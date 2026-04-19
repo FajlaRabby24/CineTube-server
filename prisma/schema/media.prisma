@@ -11,7 +11,6 @@ model Media {
   totalEpisodes    Int? // series only
   youtubeStreamUrl String? // YouTube embed URL for streaming
   language         String    @default("English")
-  country          String?
 
   // Pricing & visibility
   pricingType PricingType   @default(FREE)

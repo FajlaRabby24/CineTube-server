@@ -106,7 +106,6 @@ const getAllMediaFromDB = async (query: Record<string, any>) => {
       "type",
       "pricingType",
       "status",
-      "releaseYear",
       "isFeatured",
       "isTrending",
       "isEditorsPick",

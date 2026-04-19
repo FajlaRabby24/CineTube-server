@@ -71,32 +71,6 @@ const getUserReviewsFromDB = async (userId: string, query: IQueryParams) => {
     .search()
     .sort()
     .paginate()
-    /**
-   * {
-  user: {
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-    },
-  },
-  media: {
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      posterUrl: true,
-    },
-  },
-  _count: {
-    select: {
-      likes: true,
-      comments: true,
-    },
-  },
-}
-   */
     .include({
       user: {
         select: {
@@ -111,6 +85,18 @@ const getUserReviewsFromDB = async (userId: string, query: IQueryParams) => {
           id: true,
           title: true,
           slug: true,
+        },
+      },
+      comments: {
+        select: {
+          id: true,
+          content: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
       _count: {
@@ -229,6 +215,21 @@ const getMediaReviewsFromDB = async (mediaId: string, query: IQueryParams) => {
           id: true,
           title: true,
           slug: true,
+        },
+      },
+      comments: {
+        select: {
+          id: true,
+          content: true,
+          likesCount: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
         },
       },
       _count: {

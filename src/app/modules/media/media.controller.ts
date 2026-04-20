@@ -51,6 +51,13 @@ const getMediaById = catchAsync(async (req: Request, res: Response) => {
   );
 });
 
+const addViews = catchAsync(async (req: Request, res: Response) => {
+  const { mediaId } = req.params;
+  const result = await MediaService.addViewsInDB(mediaId as string);
+
+  sendResponse(res, status.OK, true, "Views added successfully", result);
+});
+
 const updateMedia = catchAsync(async (req: Request, res: Response) => {
   const { mediaId } = req.params;
   const adminId = req.user.userId;
@@ -75,6 +82,7 @@ export const MediaController = {
   createMedia,
   getAllMedia,
   getMediaBySlug,
+  addViews,
   getMediaById,
   updateMedia,
   deleteMedia,

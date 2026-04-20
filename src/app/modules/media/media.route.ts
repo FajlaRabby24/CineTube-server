@@ -12,6 +12,7 @@ const router = Router();
 router.get("/", MediaController.getAllMedia);
 router.get("/:slug", MediaController.getMediaBySlug);
 router.get("/:mediaId/details", MediaController.getMediaById);
+router.post("/:mediaId/add-views", MediaController.addViews);
 
 // Admin routes
 router.post(

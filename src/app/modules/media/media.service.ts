@@ -251,6 +251,30 @@ const getMediaByIdFromDB = async (mediaId: string) => {
   return mediaQuery;
 };
 
+const addViewsInDB = async (mediaId: string) => {
+  const isMediaExists = await prisma.media.findUnique({
+    where: { id: mediaId },
+  });
+
+  if (!isMediaExists) {
+    throw new AppError(status.NOT_FOUND, "Media not found");
+  }
+
+  const result = await prisma.media.update({
+    where: { id: mediaId },
+    data: {
+      totalViews: isMediaExists.totalViews + 1,
+    },
+    select: {
+      id: true,
+      title: true,
+      totalViews: true,
+    },
+  });
+
+  return result;
+};
+
 const updateMediaInDB = async (
   adminId: string,
   mediaId: string,
@@ -369,4 +393,5 @@ export const MediaService = {
   getMediaByIdFromDB,
   updateMediaInDB,
   deleteMediaFromDB,
+  addViewsInDB,
 };

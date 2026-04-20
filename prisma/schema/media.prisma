@@ -20,6 +20,8 @@ model Media {
   averageRating Float @default(0)
   totalReviews  Int   @default(0)
   totalViews    Int   @default(0)
+  totalLikes    Int   @default(0)
+  totalDislikes Int   @default(0)
 
   // Admin curated flags
   isFeatured    Boolean @default(false)
@@ -35,6 +37,7 @@ model Media {
   reviews          Review[]
   watchlistEntries Watchlist[]
   tags             MediaTag[]
+  votes            MediaVote[]
 
   @@index([type])
   @@index([releaseYear])
@@ -69,9 +72,6 @@ model MediaPlatform {
   @@map("media_platform")
 }
 
-
-
-
 model Tag {
   id        String   @id @default(cuid())
   name      String   @unique // "classic", "underrated", "family-friendly"
@@ -94,4 +94,19 @@ model MediaTag {
 
   @@unique([mediaId, tagId])
   @@map("media_tag")
+}
+
+model MediaVote {
+  id        String   @id @default(cuid())
+  mediaId   String
+  userId    String
+  type      VoteType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, userId])
+  @@map("media_vote")
 }

@@ -142,3 +142,8 @@ enum AuditAction {
   PRICING_PLAN_CREATED
   PRICING_PLAN_UPDATED
 }
+
+enum VoteType {
+  LIKE
+  DISLIKE
+}

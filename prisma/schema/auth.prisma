@@ -25,6 +25,7 @@ model User {
   payments      Payment[]
   notifications Notification[]
   reviews       Review[]
+  mediaVotes    MediaVote[]
   admin         Admin?
 
   @@unique([email])

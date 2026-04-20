@@ -58,6 +58,15 @@ const addViews = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "Views added successfully", result);
 });
 
+const toggleLikeMedia = catchAsync(async (req: Request, res: Response) => {
+  const { mediaId } = req.params;
+  const userId = req.user.userId;
+  const { type } = req.body;
+  const result = await MediaService.toggleLikeMediaInDB(mediaId as string, userId, type);
+
+  sendResponse(res, status.OK, true, "Media vote updated successfully", result);
+});
+
 const updateMedia = catchAsync(async (req: Request, res: Response) => {
   const { mediaId } = req.params;
   const adminId = req.user.userId;
@@ -78,6 +87,14 @@ const deleteMedia = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "Media deleted successfully", null);
 });
 
+const getUserVoteStatus = catchAsync(async (req: Request, res: Response) => {
+  const { mediaId } = req.params;
+  const userId = req.user.userId;
+  const result = await MediaService.getUserVoteStatusFromDB(mediaId as string, userId);
+
+  sendResponse(res, status.OK, true, "User vote status retrieved successfully", result);
+});
+
 export const MediaController = {
   createMedia,
   getAllMedia,
@@ -85,5 +102,7 @@ export const MediaController = {
   addViews,
   getMediaById,
   updateMedia,
+  toggleLikeMedia,
+  getUserVoteStatus,
   deleteMedia,
 };

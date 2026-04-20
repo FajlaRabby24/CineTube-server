@@ -275,6 +275,68 @@ const addViewsInDB = async (mediaId: string) => {
   return result;
 };
 
+const toggleLikeMediaInDB = async (
+  mediaId: string,
+  userId: string,
+  type: "LIKE" | "DISLIKE"
+) => {
+  const media = await prisma.media.findUnique({
+    where: { id: mediaId },
+  });
+
+  if (!media) {
+    throw new AppError(status.NOT_FOUND, "Media not found");
+  }
+
+  const existingVote = await prisma.mediaVote.findUnique({
+    where: { mediaId_userId: { mediaId, userId } },
+  });
+
+  const result = await prisma.$transaction(async (tx) => {
+    if (existingVote) {
+      if (existingVote.type === type) {
+        // User clicked the exact same button (e.g. liked again) -> remove vote
+        await tx.mediaVote.delete({ where: { id: existingVote.id } });
+        return tx.media.update({
+          where: { id: mediaId },
+          data: type === "LIKE"
+            ? { totalLikes: { decrement: 1 } }
+            : { totalDislikes: { decrement: 1 } },
+          select: { id: true, title: true, totalLikes: true, totalDislikes: true },
+        });
+      } else {
+        // User clicked the opposite button (e.g. was LIKE, now click DISLIKE) -> swap vote
+        await tx.mediaVote.update({
+          where: { id: existingVote.id },
+          data: { type },
+        });
+        return tx.media.update({
+          where: { id: mediaId },
+          data: {
+            totalLikes: type === "LIKE" ? { increment: 1 } : { decrement: 1 },
+            totalDislikes: type === "DISLIKE" ? { increment: 1 } : { decrement: 1 },
+          },
+          select: { id: true, title: true, totalLikes: true, totalDislikes: true },
+        });
+      }
+    } else {
+      // User never voted -> add new vote
+      await tx.mediaVote.create({
+        data: { mediaId, userId, type },
+      });
+      return tx.media.update({
+        where: { id: mediaId },
+        data: type === "LIKE"
+          ? { totalLikes: { increment: 1 } }
+          : { totalDislikes: { increment: 1 } },
+        select: { id: true, title: true, totalLikes: true, totalDislikes: true },
+      });
+    }
+  });
+
+  return result;
+};
+
 const updateMediaInDB = async (
   adminId: string,
   mediaId: string,
@@ -386,6 +448,14 @@ const deleteMediaFromDB = async (adminId: string, mediaId: string) => {
   return null;
 };
 
+const getUserVoteStatusFromDB = async (mediaId: string, userId: string) => {
+  const vote = await prisma.mediaVote.findUnique({
+    where: { mediaId_userId: { mediaId, userId } },
+    select: { type: true },
+  });
+  return { userVote: vote?.type || null };
+};
+
 export const MediaService = {
   createMediaIntoDB,
   getAllMediaFromDB,
@@ -393,5 +463,7 @@ export const MediaService = {
   getMediaByIdFromDB,
   updateMediaInDB,
   deleteMediaFromDB,
+  toggleLikeMediaInDB,
+  getUserVoteStatusFromDB,
   addViewsInDB,
 };

@@ -13,6 +13,16 @@ router.get("/", MediaController.getAllMedia);
 router.get("/:slug", MediaController.getMediaBySlug);
 router.get("/:mediaId/details", MediaController.getMediaById);
 router.post("/:mediaId/add-views", MediaController.addViews);
+router.post(
+  "/:mediaId/like",
+  checkAuth(Role.USER, Role.ADMIN, Role.SUPER_ADMIN),
+  MediaController.toggleLikeMedia,
+);
+router.get(
+  "/:mediaId/vote-status",
+  checkAuth(Role.USER, Role.ADMIN, Role.SUPER_ADMIN),
+  MediaController.getUserVoteStatus,
+);
 
 // Admin routes
 router.post(

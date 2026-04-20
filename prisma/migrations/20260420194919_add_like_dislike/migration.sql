@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "media" ADD COLUMN     "totalDislikes" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "totalLikes" INTEGER NOT NULL DEFAULT 0;

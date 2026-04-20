@@ -225,7 +225,7 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
           cancel_at_period_end: boolean;
         };
 
-        await prisma.subscription.update({
+        const updatedSub = await prisma.subscription.update({
           where: { userId },
           data: {
             plan,
@@ -241,7 +241,47 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             cancelAtPeriodEnd: stripeSub.cancel_at_period_end || false,
             cancelledAt: null,
           },
+          include: { user: true }
         });
+
+        const invoiceId = session.invoice as string;
+        if (invoiceId) {
+          const alreadyProcessed = await prisma.payment.findFirst({
+            where: { stripeInvoiceId: invoiceId },
+          });
+
+          if (!alreadyProcessed) {
+            await prisma.payment.create({
+              data: {
+                userId,
+                subscriptionId: updatedSub.id,
+                stripeInvoiceId: invoiceId,
+                amount: session.amount_total ? session.amount_total / 100 : 0,
+                currency: session.currency ?? "usd",
+                status: PaymentStatus.SUCCEEDED,
+                plan,
+                description: `${plan} subscription activated`,
+              },
+            });
+
+            if (updatedSub.user?.email) {
+              await sendEmail({
+                to: updatedSub.user.email,
+                subject: "Your CineTube Receipt",
+                templateName: "subscription-receipt",
+                templateData: {
+                  userName: updatedSub.user.name || "Customer",
+                  email: updatedSub.user.email,
+                  totalBill: `${(session.amount_total ? session.amount_total / 100 : 0).toFixed(2)} ${(session.currency ?? "usd").toUpperCase()}`,
+                  customerId: session.customer as string,
+                  planName: plan,
+                  date: new Date().toLocaleDateString(),
+                  envVars,
+                },
+              }).catch((err) => console.error("Email send error:", err));
+            }
+          }
+        }
 
         console.log(
           `Subscription ${stripeSub.id} activated for user ${userId}`,
@@ -366,7 +406,7 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             where: { id: subscription.userId },
           });
           if (user?.email) {
-            sendEmail({
+            await sendEmail({
               to: user.email,
               subject: "Your CineTube Receipt",
               templateName: "subscription-receipt",

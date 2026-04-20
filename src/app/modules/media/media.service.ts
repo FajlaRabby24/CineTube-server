@@ -109,6 +109,7 @@ const getAllMediaFromDB = async (query: Record<string, any>) => {
       "isFeatured",
       "isTrending",
       "isEditorsPick",
+      "averageRating",
     ],
 
     // ✅ Genre enum config

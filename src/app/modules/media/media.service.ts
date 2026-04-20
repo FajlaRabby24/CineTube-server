@@ -95,41 +95,6 @@ const createMediaIntoDB = async (
   return result;
 };
 
-// const getAllMediaFromDB = async (query: Record<string, any>) => {
-//   const mediaQuery = new QueryBuilder<
-//     Media,
-//     Prisma.MediaWhereInput,
-//     Prisma.MediaInclude
-//   >(prisma.media, query, {
-//     searchableFields: ["title", "synopsis", "slug", "synopsis"],
-//     filterableFields: [
-//       "type",
-//       "pricingType",
-//       "status",
-//       "isFeatured",
-//       "isTrending",
-//       "isEditorsPick",
-//     ],
-//   })
-//     .search()
-//     .filter()
-//     .sort()
-//     .paginate()
-//     .staticSelect([
-//       "id",
-//       "slug",
-//       "title",
-//       "youtubeStreamUrl",
-//       "status",
-//       "type",
-//       "averageRating",
-//       "releaseYear",
-//       "pricingType",
-//     ]);
-
-//   return await mediaQuery.execute();
-// };
-
 const getAllMediaFromDB = async (query: Record<string, any>) => {
   const mediaQuery = new QueryBuilder<
     Media,

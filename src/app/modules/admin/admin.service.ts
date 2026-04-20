@@ -123,6 +123,35 @@ const getDashboardStats = async () => {
     _sum: { amount: true },
   });
 
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+  sixMonthsAgo.setDate(1);
+  sixMonthsAgo.setHours(0, 0, 0, 0);
+
+  const recentPayments = await prisma.payment.findMany({
+    where: {
+      status: PaymentStatus.SUCCEEDED,
+      createdAt: { gte: sixMonthsAgo },
+    },
+    select: { amount: true, createdAt: true },
+  });
+
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  
+  const revenueTimeline = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i));
+    return { name: monthNames[d.getMonth()], revenue: 0 };
+  });
+
+  recentPayments.forEach((p) => {
+    const monthName = monthNames[p.createdAt.getMonth()];
+    const timelineEntry = revenueTimeline.find((t) => t.name === monthName);
+    if (timelineEntry) {
+      timelineEntry.revenue += p.amount;
+    }
+  });
+
   return {
     users: {
       total: totalUsers,
@@ -143,6 +172,7 @@ const getDashboardStats = async () => {
       reviews: pendingReviews,
       reports: pendingReports,
     },
+    revenueTimeline,
   };
 };
 

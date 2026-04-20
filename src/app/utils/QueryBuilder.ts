@@ -43,11 +43,79 @@ export class QueryBuilder<
     };
   }
 
+  // search(): this {
+  //   const { searchTerm } = this.queryParams;
+  //   const { searchableFields } = this.config;
+  //   // doctorSearchableFields = ['user.name', 'user.email', 'specialties.specialty.title' , 'specialties.specialty.description']
+  //   if (searchTerm && searchableFields && searchableFields.length > 0) {
+  //     const searchConditions: Record<string, unknown>[] = searchableFields.map(
+  //       (field) => {
+  //         if (field.includes(".")) {
+  //           const parts = field.split(".");
+
+  //           if (parts.length === 2) {
+  //             const [relation, nestedField] = parts;
+
+  //             const stringFilter: PrismaStringFilter = {
+  //               contains: searchTerm,
+  //               mode: "insensitive" as const,
+  //             };
+
+  //             return {
+  //               [relation as string]: {
+  //                 [nestedField as string]: stringFilter,
+  //               },
+  //             };
+  //           } else if (parts.length === 3) {
+  //             const [relation, nestedRelation, nestedField] = parts;
+
+  //             const stringFilter: PrismaStringFilter = {
+  //               contains: searchTerm,
+  //               mode: "insensitive" as const,
+  //             };
+
+  //             return {
+  //               [relation as string]: {
+  //                 some: {
+  //                   [nestedRelation as string]: {
+  //                     [nestedField as string]: stringFilter,
+  //                   },
+  //                 },
+  //               },
+  //             };
+  //           }
+  //         }
+  //         // direct field
+  //         const stringFilter: PrismaStringFilter = {
+  //           contains: searchTerm,
+  //           mode: "insensitive" as const,
+  //         };
+  //         return {
+  //           [field]: stringFilter,
+  //         };
+  //       },
+  //     );
+
+  //     const whereConditions = this.query.where as PrismaWhereConditions;
+  //     whereConditions.OR = searchConditions;
+
+  //     const countWhereConditions = this.countQuery
+  //       .where as PrismaWhereConditions;
+  //     countWhereConditions.OR = searchConditions;
+  //   }
+
+  //   return this;
+  // }
+
+  // /doctors?searchTerm=john&page=1&sortBy=name&specialty=cardiology&appointmentFee[lt]=100 => {}
+  // { specialty: 'cardiology', appointmentFee: { lt: '100' } }
+
   search(): this {
     const { searchTerm } = this.queryParams;
-    const { searchableFields } = this.config;
-    // doctorSearchableFields = ['user.name', 'user.email', 'specialties.specialty.title' , 'specialties.specialty.description']
+    const { searchableFields, someRelationEnumFields } = this.config;
+
     if (searchTerm && searchableFields && searchableFields.length > 0) {
+      // Normal string fields
       const searchConditions: Record<string, unknown>[] = searchableFields.map(
         (field) => {
           if (field.includes(".")) {
@@ -55,46 +123,72 @@ export class QueryBuilder<
 
             if (parts.length === 2) {
               const [relation, nestedField] = parts;
-
-              const stringFilter: PrismaStringFilter = {
-                contains: searchTerm,
-                mode: "insensitive" as const,
-              };
-
               return {
                 [relation as string]: {
-                  [nestedField as string]: stringFilter,
+                  [nestedField as string]: {
+                    contains: searchTerm,
+                    mode: "insensitive" as const,
+                  },
                 },
               };
             } else if (parts.length === 3) {
               const [relation, nestedRelation, nestedField] = parts;
-
-              const stringFilter: PrismaStringFilter = {
-                contains: searchTerm,
-                mode: "insensitive" as const,
-              };
-
               return {
                 [relation as string]: {
                   some: {
                     [nestedRelation as string]: {
-                      [nestedField as string]: stringFilter,
+                      [nestedField as string]: {
+                        contains: searchTerm,
+                        mode: "insensitive" as const,
+                      },
                     },
                   },
                 },
               };
             }
           }
-          // direct field
-          const stringFilter: PrismaStringFilter = {
-            contains: searchTerm,
-            mode: "insensitive" as const,
-          };
+
           return {
-            [field]: stringFilter,
+            [field]: {
+              contains: searchTerm,
+              mode: "insensitive" as const,
+            },
           };
         },
       );
+
+      // ✅ Enum relation fields আলাদাভাবে handle করো
+      if (someRelationEnumFields && someRelationEnumFields.length > 0) {
+        someRelationEnumFields.forEach(({ field, enumValues }) => {
+          const parts = field.split(".");
+          if (parts.length !== 2) return;
+
+          const [relation, nestedField] = parts;
+          const upperSearch = searchTerm.toUpperCase();
+
+          // Check করো searchTerm টা valid enum value কিনা
+          const isValidEnum = enumValues.some((val) =>
+            val.toUpperCase().includes(upperSearch),
+          );
+
+          if (isValidEnum) {
+            // Match হওয়া enum values গুলো বের করো
+            const matchedEnums = enumValues.filter((val) =>
+              val.toUpperCase().includes(upperSearch),
+            );
+
+            matchedEnums.forEach((enumVal) => {
+              searchConditions.push({
+                [relation as string]: {
+                  some: {
+                    [nestedField as string]: enumVal, // ✅ Exact enum match
+                  },
+                },
+              });
+            });
+          }
+        });
+      }
 
       const whereConditions = this.query.where as PrismaWhereConditions;
       whereConditions.OR = searchConditions;
@@ -106,8 +200,7 @@ export class QueryBuilder<
 
     return this;
   }
-  // /doctors?searchTerm=john&page=1&sortBy=name&specialty=cardiology&appointmentFee[lt]=100 => {}
-  // { specialty: 'cardiology', appointmentFee: { lt: '100' } }
+
   filter(): this {
     const { filterableFields } = this.config;
     const excludedField = [

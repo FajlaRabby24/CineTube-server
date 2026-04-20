@@ -1,6 +1,6 @@
 import status from "http-status";
 import { Media, Prisma } from "../../../generated/prisma/client";
-import { AuditAction } from "../../../generated/prisma/enums";
+import { AuditAction, Genre } from "../../../generated/prisma/enums";
 import AppError from "../../errorhandlers/AppError";
 import { prisma } from "../../lib/prisma";
 import { QueryBuilder } from "../../utils/QueryBuilder";
@@ -95,13 +95,48 @@ const createMediaIntoDB = async (
   return result;
 };
 
+// const getAllMediaFromDB = async (query: Record<string, any>) => {
+//   const mediaQuery = new QueryBuilder<
+//     Media,
+//     Prisma.MediaWhereInput,
+//     Prisma.MediaInclude
+//   >(prisma.media, query, {
+//     searchableFields: ["title", "synopsis", "slug", "synopsis"],
+//     filterableFields: [
+//       "type",
+//       "pricingType",
+//       "status",
+//       "isFeatured",
+//       "isTrending",
+//       "isEditorsPick",
+//     ],
+//   })
+//     .search()
+//     .filter()
+//     .sort()
+//     .paginate()
+//     .staticSelect([
+//       "id",
+//       "slug",
+//       "title",
+//       "youtubeStreamUrl",
+//       "status",
+//       "type",
+//       "averageRating",
+//       "releaseYear",
+//       "pricingType",
+//     ]);
+
+//   return await mediaQuery.execute();
+// };
+
 const getAllMediaFromDB = async (query: Record<string, any>) => {
   const mediaQuery = new QueryBuilder<
     Media,
     Prisma.MediaWhereInput,
     Prisma.MediaInclude
   >(prisma.media, query, {
-    searchableFields: ["title", "synopsis", "slug", "synopsis"],
+    searchableFields: ["title", "synopsis", "slug"],
     filterableFields: [
       "type",
       "pricingType",
@@ -109,6 +144,14 @@ const getAllMediaFromDB = async (query: Record<string, any>) => {
       "isFeatured",
       "isTrending",
       "isEditorsPick",
+    ],
+
+    // ✅ Genre enum config
+    someRelationEnumFields: [
+      {
+        field: "genres.genre",
+        enumValues: Object.values(Genre), // ["ACTION", "SPORT", "DRAMA", ...]
+      },
     ],
   })
     .search()

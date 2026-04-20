@@ -40,11 +40,19 @@ export interface IQueryParams {
   [key: string]: string | undefined;
 }
 
+// export interface IQueryConfig {
+//   searchableFields?: string[];
+//   filterableFields?: string[];
+// }
+
 export interface IQueryConfig {
   searchableFields?: string[];
   filterableFields?: string[];
+  someRelationEnumFields?: {
+    field: string; // e.g. "genres.genre"
+    enumValues: string[]; // e.g. ["ACTION", "SPORT", "DRAMA", ...]
+  }[];
 }
-
 export interface PrismaStringFilter {
   contains?: string;
   startsWith?: string;

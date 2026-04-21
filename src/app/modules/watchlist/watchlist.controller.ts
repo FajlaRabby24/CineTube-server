@@ -13,13 +13,23 @@ const getUserWatchlist = catchAsync(async (req: Request, res: Response) => {
     req.query as IQueryParams,
   );
 
-  sendResponse(res, status.OK, true, "Watchlist retrieved successfully", result);
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "Watchlist retrieved successfully",
+    result.data,
+    result.meta,
+  );
 });
 
 const addToWatchlist = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as IRequestUser;
   const { mediaId } = req.params;
-  const result = await WatchlistService.addToWatchlistDB(userId, mediaId as string);
+  const result = await WatchlistService.addToWatchlistDB(
+    userId,
+    mediaId as string,
+  );
 
   sendResponse(res, status.CREATED, true, "Added to watchlist", result);
 });

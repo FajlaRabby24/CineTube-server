@@ -1,5 +1,5 @@
 import status from "http-status";
-import { Prisma } from "../../../generated/prisma/client";
+import { Prisma, Watchlist } from "../../../generated/prisma/client";
 import AppError from "../../errorhandlers/AppError.js";
 import { IQueryParams } from "../../interfaces/query.interface.js";
 import { prisma } from "../../lib/prisma.js";
@@ -7,12 +7,12 @@ import { QueryBuilder } from "../../utils/QueryBuilder.js";
 
 const getUserWatchlistFromDB = async (userId: string, query: IQueryParams) => {
   const watchlistQuery = new QueryBuilder<
-    Prisma.WatchlistWhereInput,
+    Watchlist,
     Prisma.WatchlistWhereInput,
     Prisma.WatchlistInclude
   >(prisma.watchlist, query, {
-    searchableFields: [],
-    filterableFields: [],
+    searchableFields: ["media.title", "media.slug", "media.synopsis"],
+    filterableFields: ["media.type", "media.releaseYear", "media.ageRating"],
   })
     .filter()
     .where({ userId })
@@ -26,6 +26,7 @@ const getUserWatchlistFromDB = async (userId: string, query: IQueryParams) => {
           slug: true,
           type: true,
           releaseYear: true,
+          youtubeStreamUrl: true,
         },
       },
     });

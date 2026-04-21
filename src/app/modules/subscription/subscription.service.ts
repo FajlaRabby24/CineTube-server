@@ -253,6 +253,17 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
           include: { user: true },
         });
 
+        // Add subscription activation notification
+        await prisma.notification.create({
+          data: {
+            userId,
+            type: "SUBSCRIPTION_ACTIVATED" as any,
+            title: "Premium Tier Activated",
+            message: `Welcome to the ${plan} Tier. Your cinematic journey begins now.`,
+            link: "/dashboard/subscriptions",
+          },
+        });
+
         const invoiceId = session.invoice as string;
         if (invoiceId) {
           const alreadyProcessed = await prisma.payment.findFirst({
@@ -402,6 +413,18 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
               description: `${subscription.plan} subscription renewal`,
             },
           });
+
+          // Add payment success notification
+          await tx.notification.create({
+            data: {
+              userId: subscription.userId,
+              type: "PAYMENT_SUCCEEDED" as any,
+              title: "Payment Encrypted",
+              message: `Your ${subscription.plan} billing was processed successfully.`,
+              link: "/dashboard/subscriptions",
+            },
+          });
+
           console.log(`Payment record created for invoice ${invoice.id}`);
 
           // Send receipt email
@@ -471,6 +494,17 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
               status: PaymentStatus.FAILED,
               plan: subscription.plan,
               description: `${subscription.plan} payment failed`,
+            },
+          });
+
+          // Add payment failure notification
+          await tx.notification.create({
+            data: {
+              userId: subscription.userId,
+              type: "PAYMENT_FAILED" as any,
+              title: "Billing Transmission Fault",
+              message: `The transaction for your ${subscription.plan} tier encountered an error.`,
+              link: "/dashboard/subscriptions",
             },
           });
         });

@@ -597,6 +597,20 @@ const toggleLikeReviewIntoDB = async (reviewId: string, userId: string) => {
         where: { id: reviewId },
         data: { likesCount: { increment: 1 } },
       }),
+      // Create notification for the review author
+      ...(review.userId !== userId
+        ? [
+            prisma.notification.create({
+              data: {
+                userId: review.userId,
+                type: NotificationType.REVIEW_LIKED,
+                title: "New Review Appreciation",
+                message: "Someone appreciated your cinematic analysis.",
+                link: `/reviews/${reviewId}`,
+              },
+            }),
+          ]
+        : []),
     ]);
     return { liked: true, likesCount: review.likesCount + 1 };
   }

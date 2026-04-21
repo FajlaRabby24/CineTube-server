@@ -201,6 +201,18 @@ const createCustomerPortalSession = async (userId: string) => {
   return { url: session.url };
 };
 
+// Helper: Calculate subscription period end based on plan
+const calculatePeriodEnd = (plan: SubscriptionPlan): Date => {
+  const now = new Date();
+  if (plan === SubscriptionPlan.YEARLY) {
+    return new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+  }
+  if (plan === SubscriptionPlan.MONTHLY) {
+    return new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  }
+  return now;
+};
+
 const handleWebhookEvent = async (event: Stripe.Event) => {
   // console.log({ eventType: event.type });
   switch (event.type) {
@@ -215,33 +227,30 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         const subscriptionId = session.subscription as string;
         if (!subscriptionId) break;
 
-        const stripeSub = (await stripe.subscriptions.retrieve(
-          subscriptionId,
-        )) as unknown as {
-          id: string;
-          items: { data: Array<{ price: { id: string } }> };
-          current_period_start: number;
-          current_period_end: number;
-          cancel_at_period_end: boolean;
-        };
+        const stripeSubRaw =
+          await stripe.subscriptions.retrieve(subscriptionId);
+
+        const now = new Date();
+        const periodEnd = calculatePeriodEnd(plan);
+
+        console.log(
+          `[Webhook] checkout.session.completed — plan: ${plan}, periodEnd: ${periodEnd.toISOString()}`,
+        );
 
         const updatedSub = await prisma.subscription.update({
           where: { userId },
           data: {
             plan,
             status: SubscriptionStatus.ACTIVE,
-            stripeSubscriptionId: stripeSub.id,
-            stripePriceId: stripeSub.items.data[0]?.price.id ?? null,
-            currentPeriodStart: stripeSub.current_period_start
-              ? new Date(stripeSub.current_period_start * 1000)
-              : new Date(),
-            currentPeriodEnd: stripeSub.current_period_end
-              ? new Date(stripeSub.current_period_end * 1000)
-              : new Date(),
-            cancelAtPeriodEnd: stripeSub.cancel_at_period_end || false,
+            stripeSubscriptionId: stripeSubRaw.id,
+            stripePriceId:
+              (stripeSubRaw as any).items?.data?.[0]?.price?.id ?? null,
+            currentPeriodStart: now,
+            currentPeriodEnd: periodEnd,
+            cancelAtPeriodEnd: false,
             cancelledAt: null,
           },
-          include: { user: true }
+          include: { user: true },
         });
 
         const invoiceId = session.invoice as string;
@@ -284,7 +293,7 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         }
 
         console.log(
-          `Subscription ${stripeSub.id} activated for user ${userId}`,
+          `Subscription ${stripeSubRaw.id} activated for user ${userId}`,
         );
       } catch (error) {
         console.error("Webhook (session.completed) error:", error);
@@ -363,27 +372,21 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
           break;
         }
 
-        const stripeSub = (await stripe.subscriptions.retrieve(
-          finalSubscriptionId,
-        )) as unknown as {
-          current_period_start: number;
-          current_period_end: number;
-          cancel_at_period_end: boolean;
-        };
+        const renewalEnd = calculatePeriodEnd(subscription.plan);
+
+        console.log(
+          `[Webhook] invoice.payment_succeeded — plan: ${subscription.plan}, renewalEnd: ${renewalEnd.toISOString()}`,
+        );
 
         await prisma.$transaction(async (tx) => {
           await tx.subscription.update({
             where: { id: subscription.id },
             data: {
               status: SubscriptionStatus.ACTIVE,
-              stripeSubscriptionId: finalSubscriptionId, // Ensure it's linked
-              currentPeriodStart: stripeSub.current_period_start
-                ? new Date(stripeSub.current_period_start * 1000)
-                : subscription.currentPeriodStart,
-              currentPeriodEnd: stripeSub.current_period_end
-                ? new Date(stripeSub.current_period_end * 1000)
-                : subscription.currentPeriodEnd,
-              cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+              stripeSubscriptionId: finalSubscriptionId,
+              currentPeriodStart: new Date(),
+              currentPeriodEnd: renewalEnd,
+              cancelAtPeriodEnd: false,
             },
           });
 
@@ -480,25 +483,20 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
 
     case "customer.subscription.updated": {
       try {
-        const stripeSub = event.data.object as unknown as {
-          id: string;
-          status: string;
-          current_period_start: number;
-          current_period_end: number;
-          cancel_at_period_end: boolean;
-          canceled_at: number | null;
-        };
+        const subEvent = event.data.object as any;
 
         const subscription = await prisma.subscription.findFirst({
-          where: { stripeSubscriptionId: stripeSub.id },
+          where: { stripeSubscriptionId: subEvent.id },
           include: {
             user: true,
           },
         });
         if (!subscription) break;
 
+        const subCanceledAt = subEvent.canceled_at || subEvent.canceledAt;
+
         let newStatus: SubscriptionStatus;
-        switch (stripeSub.status) {
+        switch (subEvent.status) {
           case "active":
             newStatus = SubscriptionStatus.ACTIVE;
             break;
@@ -512,20 +510,16 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             newStatus = SubscriptionStatus.ACTIVE;
         }
 
+        console.log(
+          `[Webhook] subscription.updated — status: ${subEvent.status}`,
+        );
+
         await prisma.subscription.update({
           where: { id: subscription.id },
           data: {
             status: newStatus,
-            currentPeriodStart: stripeSub.current_period_start
-              ? new Date(stripeSub.current_period_start * 1000)
-              : subscription.currentPeriodStart,
-            currentPeriodEnd: stripeSub.current_period_end
-              ? new Date(stripeSub.current_period_end * 1000)
-              : subscription.currentPeriodEnd,
-            cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-            cancelledAt: stripeSub.canceled_at
-              ? new Date(stripeSub.canceled_at * 1000)
-              : null,
+            cancelAtPeriodEnd: subEvent.cancel_at_period_end ?? false,
+            cancelledAt: subCanceledAt ? new Date(subCanceledAt * 1000) : null,
           },
           include: { user: true },
         });

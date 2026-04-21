@@ -34,7 +34,8 @@ const getUserNotificationsFromDB = async (
     .filter()
     .where({ userId })
     .sort()
-    .paginate();
+    .paginate()
+    .staticSelect(["id", "userId", "type", "title", "isRead", "createdAt"]);
 
   return await notificationQuery.execute();
 };

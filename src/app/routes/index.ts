@@ -3,6 +3,7 @@ import status from "http-status";
 import { AdminRoutes } from "../modules/admin/admin.route";
 import { authRoute } from "../modules/auth/auth.route";
 import { CommentRoutes } from "../modules/comment/comment.route";
+import { DashboardRoutes } from "../modules/dashboard/dashboard.route";
 import { MediaRoutes } from "../modules/media/media.route";
 import { NotificationRoutes } from "../modules/notification/notification.route";
 import { PaymentRoutes } from "../modules/payment/payment.route";
@@ -28,6 +29,7 @@ router.use("/notifications", NotificationRoutes);
 router.use("/payments", PaymentRoutes);
 router.use("/pricing", PricingRoutes);
 router.use("/subscriptions", SubscriptionRoutes);
+router.use("/dashboard", DashboardRoutes);
 
 router.post("/validate-file", async (req, res) => {
   const { name, size, type } = req.body;

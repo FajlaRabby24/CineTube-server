@@ -18,7 +18,8 @@ const getUserNotifications = catchAsync(async (req: Request, res: Response) => {
     status.OK,
     true,
     "Notifications retrieved successfully",
-    result,
+    result.data,
+    result.meta,
   );
 });
 
@@ -29,19 +30,7 @@ const markAllAsRead = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, status.OK, true, "All notifications marked as read", null);
 });
 
-const markAsRead = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.user as IRequestUser;
-  const { notificationId } = req.params;
-  const result = await NotificationService.markAsReadFromDB(
-    userId,
-    notificationId as string,
-  );
-
-  sendResponse(res, status.OK, true, "Notification marked as read", result);
-});
-
 export const NotificationController = {
   getUserNotifications,
   markAllAsRead,
-  markAsRead,
 };

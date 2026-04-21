@@ -8,10 +8,4 @@ router.get("/", checkAuth(), NotificationController.getUserNotifications);
 
 router.patch("/read-all", checkAuth(), NotificationController.markAllAsRead);
 
-router.patch(
-  "/:notificationId/read",
-  checkAuth(),
-  NotificationController.markAsRead,
-);
-
 export const NotificationRoutes = router;

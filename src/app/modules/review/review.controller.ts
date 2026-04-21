@@ -79,7 +79,6 @@ const getMediaReviews = catchAsync(async (req: Request, res: Response) => {
 const createReview = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.user as IRequestUser;
   const { mediaId } = req.params;
-  console.log(req.body, userId, mediaId, "review controller");
   const result = await ReviewService.createReviewIntoDB(
     userId,
     mediaId as string,

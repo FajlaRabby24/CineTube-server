@@ -49,7 +49,6 @@ router.post(
 );
 router.post(
   "/reset-password",
-  checkAuth(),
   validateRequest(authValidation.resetPasswordSchema),
   authController.resetPassword,
 );

@@ -46,7 +46,6 @@ const register = async (payload: IRegisterPayload) => {
       },
     };
   } catch (error) {
-    console.log("error from register service", error);
     if (image) {
       await deleteFromCloudinary(image);
     }

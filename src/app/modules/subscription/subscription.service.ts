@@ -175,7 +175,7 @@ const cancelSubscription = async (userId: string) => {
         expiryDate: updated.currentPeriodEnd.toLocaleDateString(),
         envVars,
       },
-    }).catch((err) => console.error("Email send error:", err));
+    }).catch(() => {});
   }
 
   return updated;
@@ -214,7 +214,6 @@ const calculatePeriodEnd = (plan: SubscriptionPlan): Date => {
 };
 
 const handleWebhookEvent = async (event: Stripe.Event) => {
-  // console.log({ eventType: event.type });
   switch (event.type) {
     case "checkout.session.completed": {
       try {
@@ -232,10 +231,6 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
 
         const now = new Date();
         const periodEnd = calculatePeriodEnd(plan);
-
-        console.log(
-          `[Webhook] checkout.session.completed — plan: ${plan}, periodEnd: ${periodEnd.toISOString()}`,
-        );
 
         const updatedSub = await prisma.subscription.update({
           where: { userId },
@@ -298,23 +293,17 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
                   date: new Date().toLocaleDateString(),
                   envVars,
                 },
-              }).catch((err) => console.error("Email send error:", err));
+              }).catch(() => {});
             }
           }
         }
-
-        console.log(
-          `Subscription ${stripeSubRaw.id} activated for user ${userId}`,
-        );
       } catch (error) {
-        console.error("Webhook (session.completed) error:", error);
       }
       break;
     }
 
     case "invoice.payment_succeeded": {
       try {
-        console.log("start of invoice.payment_succeeded");
         const invoice = event.data.object as Stripe.Invoice;
         let stripeSubscriptionId =
           typeof (invoice as any).subscription === "string"
@@ -325,9 +314,6 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         if (!stripeSubscriptionId && invoice.lines?.data?.[0]) {
           stripeSubscriptionId = (invoice.lines.data[0] as any).subscription;
           if (stripeSubscriptionId) {
-            console.log(
-              `[Webhook] Found subscription ID in invoice lines: ${stripeSubscriptionId}`,
-            );
           }
         }
 
@@ -336,16 +322,10 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             ? (invoice as any).customer
             : (invoice as any).customer?.id;
 
-        console.log(`[Webhook] Processing invoice: ${invoice.id}`, {
-          stripeSubscriptionId,
-          stripeCustomerId,
-        });
-
         const alreadyProcessed = await prisma.payment.findFirst({
           where: { stripeInvoiceId: invoice.id },
         });
         if (alreadyProcessed) {
-          console.log(`Invoice ${invoice.id} already processed. Skipping`);
           break;
         }
 
@@ -357,18 +337,12 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
 
         // Fallback: If subscription ID isn't found or missing, find by customer ID
         if (!subscription && stripeCustomerId) {
-          console.log(
-            `[Webhook] Subscription ID missing or not matched. Trying Customer ID fallback: ${stripeCustomerId}`,
-          );
           subscription = await prisma.subscription.findFirst({
             where: { stripeCustomerId },
           });
         }
 
         if (!subscription) {
-          console.warn(
-            `[Webhook] No subscription record found for invoice ${invoice.id}. Skipping.`,
-          );
           break;
         }
 
@@ -377,17 +351,10 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
           stripeSubscriptionId || subscription.stripeSubscriptionId;
 
         if (!finalSubscriptionId) {
-          console.warn(
-            `[Webhook] Could not determine subscription ID for invoice ${invoice.id}. skipping.`,
-          );
           break;
         }
 
         const renewalEnd = calculatePeriodEnd(subscription.plan);
-
-        console.log(
-          `[Webhook] invoice.payment_succeeded — plan: ${subscription.plan}, renewalEnd: ${renewalEnd.toISOString()}`,
-        );
 
         await prisma.$transaction(async (tx) => {
           await tx.subscription.update({
@@ -425,8 +392,6 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             },
           });
 
-          console.log(`Payment record created for invoice ${invoice.id}`);
-
           // Send receipt email
           const user = await tx.user.findUnique({
             where: { id: subscription.userId },
@@ -445,15 +410,11 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
                 date: new Date().toLocaleDateString(),
                 envVars,
               },
-            }).catch((err) => console.error("Email send error:", err));
+            }).catch(() => {});
           }
         });
-        console.log(`Invoice ${invoice.id} processed successfully`);
-        console.log("end of invoice.payment_succeeded");
         break;
-      } catch (error) {
-        console.error("Webhook (invoice.payment_succeeded) error:", error);
-      }
+      } catch (error) {}
       break;
     }
 
@@ -467,9 +428,6 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             : (invoice as any).subscription?.id;
 
         if (!stripeSubscriptionId) {
-          console.warn(
-            `[Webhook] Failed invoice ${invoice.id} has no subscription ID. Skipping.`,
-          );
           break;
         }
 
@@ -510,7 +468,6 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         });
         break;
       } catch (error) {
-        console.error("Webhook (invoice.payment_failed) error:", error);
       }
       break;
     }
@@ -544,10 +501,6 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             newStatus = SubscriptionStatus.ACTIVE;
         }
 
-        console.log(
-          `[Webhook] subscription.updated — status: ${subEvent.status}`,
-        );
-
         await prisma.subscription.update({
           where: { id: subscription.id },
           data: {
@@ -570,11 +523,10 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
               date: new Date().toLocaleDateString(),
               envVars,
             },
-          }).catch((err) => console.error("Email send error:", err));
+          }).catch(() => {});
         }
         break;
       } catch (error) {
-        console.error("Webhook (subscription.updated) error:", error);
       }
       break;
     }
@@ -594,13 +546,12 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
         });
         break;
       } catch (error) {
-        console.error("Webhook (subscription.deleted) error:", error);
       }
       break;
     }
 
     default:
-    // console.log(`Unhandled event type: ${event.type}`);
+      break;
   }
 };
 export const SubscriptionService = {

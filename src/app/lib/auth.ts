@@ -117,14 +117,10 @@ export const auth = betterAuth({
           });
 
           if (!user) {
-            console.error("User not found");
             return;
           }
 
           if (user?.role === Role.ADMIN || user?.role === Role.SUPER_ADMIN) {
-            console.log(
-              `User with email ${email} is an admin. Skipping sending verification OTP.`,
-            );
             return;
           }
 
@@ -147,7 +143,6 @@ export const auth = betterAuth({
           });
 
           if (!user) {
-            console.error("User not found");
             return;
           }
 

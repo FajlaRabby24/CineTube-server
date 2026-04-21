@@ -11,7 +11,6 @@ import { authService } from "./auth.service";
 
 const register = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
-  console.log(payload, "from auth controller");
   const result = await authService.register(payload);
 
   sendResponse(
@@ -175,7 +174,6 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 
 const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const { email, otp } = req.body;
-  console.log(req.body, "veriy email controller");
   const result = await authService.verifyEmail(req, email, otp);
   const { accessToken, refreshToken, token } = result;
 

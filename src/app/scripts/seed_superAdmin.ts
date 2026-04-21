@@ -12,7 +12,6 @@ const seedSuperAdmin = async () => {
     });
 
     if (existingAdmin) {
-      console.log("Super admin already exists");
       return;
     }
 
@@ -53,11 +52,7 @@ const seedSuperAdmin = async () => {
         },
       });
     });
-
-    console.log("Super admin seeded successfully.");
-  } catch (error) {
-    console.error(`Error seeding super admin: ${error}`);
-  }
+  } catch (error) {}
 };
 
 seedSuperAdmin();

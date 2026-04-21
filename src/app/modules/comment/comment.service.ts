@@ -234,7 +234,6 @@ const deleteCommentIntoDB = async (
 
   const activeRepliesCount = comment.replies.length;
   const totalToDelete = 1 + activeRepliesCount;
-  console.log({ activeRepliesCount, totalToDelete });
 
   await prisma.$transaction(async (tx) => {
     if (activeRepliesCount > 0) {

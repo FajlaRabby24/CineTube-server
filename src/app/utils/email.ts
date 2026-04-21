@@ -55,12 +55,7 @@ export const sendEmail = async ({
         contentType: attachment.contentType,
       })),
     });
-
-    console.log(
-      `Email sent to ${to} : ${info.messageId}. Template name: ${templateName}`,
-    );
   } catch (error: any) {
-    console.log(`Email sending error ${error.message}`);
     throw new AppError(status.INTERNAL_SERVER_ERROR, "Failed to send email.");
   }
 };

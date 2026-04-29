@@ -4,4 +4,5 @@ export interface IRequestUser {
   userId: string;
   role: Role;
   email: string;
+  sessionId: string;
 }

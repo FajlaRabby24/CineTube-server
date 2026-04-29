@@ -28,6 +28,7 @@ export const checkAuth =
       let userId: string | undefined;
       let userRole: Role | undefined;
       let userEmail: string | undefined;
+      let sessionId: string | undefined;
 
       // ✅ Step 1: Session token check
       if (sessionToken) {
@@ -83,6 +84,7 @@ export const checkAuth =
           userId = user.id;
           userRole = user.role;
           userEmail = user.email;
+          sessionId = session.id;
         }
       }
 
@@ -97,7 +99,7 @@ export const checkAuth =
           throw new AppError(status.UNAUTHORIZED, "Invalid access token");
         }
 
-        const { userId: uid, role, email, sessionId } = verifiedToken.data;
+        const { userId: uid, role, email, sessionId: sid } = verifiedToken.data;
 
         if (!uid || !role) {
           throw new AppError(status.UNAUTHORIZED, "Invalid token payload");
@@ -106,7 +108,7 @@ export const checkAuth =
         // ✅ Step 3: Verify session still exists in DB
         const sessionExists = await prisma.session.findFirst({
           where: {
-            id: sessionId as string,
+            id: sid as string,
             userId: uid as string,
             expiresAt: { gt: new Date() },
           },
@@ -130,6 +132,7 @@ export const checkAuth =
         userId = uid as string;
         userRole = role as Role;
         userEmail = email as string;
+        sessionId = sid as string;
       }
 
       // ✅ Step 4: Final validation
@@ -145,7 +148,12 @@ export const checkAuth =
         );
       }
 
-      req.user = { userId, role: userRole, email: userEmail! };
+      req.user = {
+        userId,
+        role: userRole,
+        email: userEmail!,
+        sessionId: sessionId!,
+      };
 
       next();
     } catch (error) {

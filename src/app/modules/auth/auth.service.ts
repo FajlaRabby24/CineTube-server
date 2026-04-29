@@ -111,57 +111,6 @@ const verifyEmail = async (req: Request, email: string, otp: string) => {
   };
 };
 
-// const login = async (req: Request, payload: ILoginPayload) => {
-//   const { email, password } = payload;
-
-//   const data = await auth.api.signInEmail({
-//     body: { email, password },
-//   });
-
-//   if (!data?.token) {
-//     throw new AppError(401, "Invalid credentials");
-//   }
-
-//   // ✅ ban/active check আগে করো, session update এর আগে
-//   if (data.user.isBanned || !data.user.isActive) {
-//     throw new AppError(400, "User is banned or not active");
-//   }
-
-//   // ✅ device info + sessionId একসাথে
-//   const session = await prisma.session.findFirst({
-//     where: { token: data.token },
-//     select: { id: true },
-//   });
-
-//   await prisma.session.updateMany({
-//     where: { token: data.token },
-//     data: {
-//       ipAddress: req.ip ?? req.socket.remoteAddress ?? null,
-//       userAgent: req.headers["user-agent"] ?? "unknown",
-//     },
-//   });
-
-//   const tokenInfo = {
-//     userId: data.user.id,
-//     role: data.user.role,
-//     name: data.user.name,
-//     email: data.user.email,
-//     image: data.user.image,
-//     isBanned: data.user.isBanned,
-//     isActive: data.user.isActive,
-//     sessionId: session?.id,
-//   };
-
-//   const accessToken = tokenUtils.getAccessToken(tokenInfo);
-//   const refreshToken = tokenUtils.getRefreshToken(tokenInfo);
-
-//   return {
-//     ...data,
-//     accessToken,
-//     refreshToken,
-//   };
-// };
-
 const login = async (req: Request, payload: ILoginPayload) => {
   const { email, password, userAgent: clientUserAgent } = payload;
 
@@ -558,7 +507,11 @@ const getUserSessions = async (userId: string) => {
   return sessions;
 };
 
-const profileUpdate = async (userId: string, payload: IUpdatePayload) => {
+const profileUpdate = async (
+  userId: string,
+  payload: IUpdatePayload,
+  sessionId: string,
+) => {
   const isUserExists = await prisma.user.findUnique({
     where: {
       id: userId,
@@ -579,11 +532,14 @@ const profileUpdate = async (userId: string, payload: IUpdatePayload) => {
   });
 
   const tokenInfo = {
+    userId: result.id,
+    role: result.role,
     name: result.name,
     email: result.email,
-    bio: result.bio,
-    phoneNumber: result.phoneNumber,
     image: result.image,
+    isBanned: result.isBanned,
+    isActive: result.isActive,
+    sessionId: sessionId,
   };
 
   const accessToken = tokenUtils.getAccessToken(tokenInfo);

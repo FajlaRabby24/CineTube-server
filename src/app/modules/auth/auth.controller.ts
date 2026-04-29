@@ -136,7 +136,7 @@ const profileUpdate = catchAsync(async (req: Request, res: Response) => {
     return sendResponse(res, status.UNAUTHORIZED, false, "Unauthorized");
   }
 
-  const result = await authService.profileUpdate(user.userId, payload);
+  const result = await authService.profileUpdate(user.userId, payload, user.sessionId);
 
   const { accessToken, refreshToken } = result;
 
@@ -263,8 +263,10 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
 const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
   const redirectPath = decodeURIComponent(req.query?.redirect as string) || "/";
 
-  const sessionToken = req.cookies["better-auth.session_token"] || req.cookies["__Secure-better-auth.session_token"];
-  
+  const sessionToken =
+    req.cookies["better-auth.session_token"] ||
+    req.cookies["__Secure-better-auth.session_token"];
+
   if (!sessionToken) {
     return res.redirect(`${envVars.FRONTEND_URL}/login?error=oauth_failed`);
   }

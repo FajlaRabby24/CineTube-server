@@ -1,7 +1,7 @@
 import { toNodeHandler } from "better-auth/node";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, { Application } from "express";
+import express, { Application, Request, Response } from "express";
 import helmet from "helmet";
 import path from "path";
 import qs from "qs";
@@ -14,14 +14,30 @@ import { indexRoute } from "./app/routes";
 
 const app: Application = express();
 
+// --- TEST ROUTE (ABSOLUTE TOP) ---
+app.get("/", (req: Request, res: Response) => {
+  res.send("Hello, World! Server is working at the root.");
+});
+
 app.set("query parser", (str: string) => qs.parse(str));
 app.set("view engine", "ejs");
 app.set("views", path.resolve(process.cwd(), `src/app/templates`));
 
 app.use(express.static(path.join(process.cwd(), "src/app/public")));
 
-// 1. Security middleware সবার আগে
-app.use(helmet());
+// 1. Security middleware
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+  }),
+);
 app.use(
   cors({
     credentials: true,
@@ -32,7 +48,7 @@ app.use(
 );
 
 // 2. Better Auth
-app.use("/api/auth/*splate", toNodeHandler(auth));
+app.use("/api/auth", toNodeHandler(auth));
 
 // 3. Webhook — raw body, rate limiter নেই
 app.use(
@@ -57,10 +73,6 @@ app.use(cookieParser());
 
 // 6. Routes
 app.use("/api/v1", indexRoute);
-
-app.get("/", (req, res) => {
-  res.send("Hello, World!");
-});
 
 // 7. Error handlers সবার শেষে
 app.use(globalErrorHandler);

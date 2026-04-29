@@ -15,7 +15,8 @@ export const auth = betterAuth({
   trustedOrigins: [envVars.FRONTEND_URL, envVars.BETTER_AUTH_URL],
   advanced: {
     // disableCSRFCheck: true,
-    useSecureCookies: envVars.NODE_ENV === "production",
+    useSecureCookies: true, // Force secure in production
+    trustProxy: true, // Required for Render/Vercel
     cookies: {
       state: {
         attributes: {
@@ -26,6 +27,14 @@ export const auth = betterAuth({
         },
       },
       sessionToken: {
+        attributes: {
+          sameSite: "none",
+          secure: true,
+          httpOnly: true,
+          path: "/",
+        },
+      },
+      idToken: {
         attributes: {
           sameSite: "none",
           secure: true,

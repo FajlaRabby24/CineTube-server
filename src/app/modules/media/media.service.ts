@@ -11,8 +11,7 @@ const createMediaIntoDB = async (
   adminId: string,
   payload: ICreateMediaPayload,
 ) => {
-  const { genres, platforms, castMembers, directors, tags, ...mediaData } =
-    payload;
+  const { genres, tags, ...mediaData } = payload;
 
   const slug = slugify(mediaData.title);
 
@@ -36,29 +35,6 @@ const createMediaIntoDB = async (
         genres: {
           create: genres.map((genre: any) => ({ genre })),
         },
-        ...(platforms && {
-          platforms: {
-            create: platforms.map((p: any) => ({
-              platform: p.platform,
-              streamUrl: p.streamUrl,
-            })),
-          },
-        }),
-        ...(castMembers && {
-          castMembers: {
-            create: castMembers.map((c: any, index: number) => ({
-              ...c,
-              orderIndex: index,
-            })),
-          },
-        }),
-        ...(directors && {
-          directors: {
-            create: directors.map((d: any) => ({
-              ...d,
-            })),
-          },
-        }),
       },
     });
 
@@ -111,12 +87,10 @@ const getAllMediaFromDB = async (query: Record<string, any>) => {
       "isEditorsPick",
       "averageRating",
     ],
-
-    // ✅ Genre enum config
     someRelationEnumFields: [
       {
         field: "genres.genre",
-        enumValues: Object.values(Genre), // ["ACTION", "SPORT", "DRAMA", ...]
+        enumValues: Object.values(Genre),
       },
     ],
   })
@@ -144,45 +118,17 @@ const getMediaBySlugFromDB = async (slug: string) => {
     Media,
     Prisma.MediaWhereInput,
     Prisma.MediaInclude
-  >(
-    prisma.media,
-    {},
-    {
-      searchableFields: [],
-      filterableFields: [],
-    },
-  )
+  >(prisma.media, {}, { searchableFields: [], filterableFields: [] })
     .search()
-    .where({
-      slug,
-    })
+    .where({ slug })
     .filter()
     .sort()
     .include({
-      genres: {
-        select: {
-          id: true,
-          genre: true,
-        },
-      },
-      platforms: {
-        select: {
-          id: true,
-          platform: true,
-          streamUrl: true,
-        },
-      },
+      genres: { select: { id: true, genre: true } },
       tags: {
         select: {
           id: true,
-          tag: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              createdAt: true,
-            },
-          },
+          tag: { select: { id: true, name: true, slug: true, createdAt: true } },
         },
       },
     })
@@ -200,45 +146,17 @@ const getMediaByIdFromDB = async (mediaId: string) => {
     Media,
     Prisma.MediaWhereInput,
     Prisma.MediaInclude
-  >(
-    prisma.media,
-    {},
-    {
-      searchableFields: [],
-      filterableFields: [],
-    },
-  )
+  >(prisma.media, {}, { searchableFields: [], filterableFields: [] })
     .search()
-    .where({
-      id: mediaId,
-    })
+    .where({ id: mediaId })
     .filter()
     .sort()
     .include({
-      genres: {
-        select: {
-          id: true,
-          genre: true,
-        },
-      },
-      platforms: {
-        select: {
-          id: true,
-          platform: true,
-          streamUrl: true,
-        },
-      },
+      genres: { select: { id: true, genre: true } },
       tags: {
         select: {
           id: true,
-          tag: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              createdAt: true,
-            },
-          },
+          tag: { select: { id: true, name: true, slug: true, createdAt: true } },
         },
       },
     })
@@ -262,14 +180,8 @@ const addViewsInDB = async (mediaId: string) => {
 
   const result = await prisma.media.update({
     where: { id: mediaId },
-    data: {
-      totalViews: isMediaExists.totalViews + 1,
-    },
-    select: {
-      id: true,
-      title: true,
-      totalViews: true,
-    },
+    data: { totalViews: isMediaExists.totalViews + 1 },
+    select: { id: true, title: true, totalViews: true },
   });
 
   return result;
@@ -278,34 +190,33 @@ const addViewsInDB = async (mediaId: string) => {
 const toggleLikeMediaInDB = async (
   mediaId: string,
   userId: string,
-  type: "LIKE" | "DISLIKE"
+  type: "LIKE" | "DISLIKE",
 ) => {
-  const media = await prisma.media.findUnique({
-    where: { id: mediaId },
-  });
-
-  if (!media) {
-    throw new AppError(status.NOT_FOUND, "Media not found");
-  }
+  const media = await prisma.media.findUnique({ where: { id: mediaId } });
+  if (!media) throw new AppError(status.NOT_FOUND, "Media not found");
 
   const existingVote = await prisma.mediaVote.findUnique({
     where: { mediaId_userId: { mediaId, userId } },
   });
 
-  const result = await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async (tx) => {
     if (existingVote) {
       if (existingVote.type === type) {
-        // User clicked the exact same button (e.g. liked again) -> remove vote
         await tx.mediaVote.delete({ where: { id: existingVote.id } });
         return tx.media.update({
           where: { id: mediaId },
-          data: type === "LIKE"
-            ? { totalLikes: { decrement: 1 } }
-            : { totalDislikes: { decrement: 1 } },
-          select: { id: true, title: true, totalLikes: true, totalDislikes: true },
+          data:
+            type === "LIKE"
+              ? { totalLikes: { decrement: 1 } }
+              : { totalDislikes: { decrement: 1 } },
+          select: {
+            id: true,
+            title: true,
+            totalLikes: true,
+            totalDislikes: true,
+          },
         });
       } else {
-        // User clicked the opposite button (e.g. was LIKE, now click DISLIKE) -> swap vote
         await tx.mediaVote.update({
           where: { id: existingVote.id },
           data: { type },
@@ -314,27 +225,29 @@ const toggleLikeMediaInDB = async (
           where: { id: mediaId },
           data: {
             totalLikes: type === "LIKE" ? { increment: 1 } : { decrement: 1 },
-            totalDislikes: type === "DISLIKE" ? { increment: 1 } : { decrement: 1 },
+            totalDislikes:
+              type === "DISLIKE" ? { increment: 1 } : { decrement: 1 },
           },
-          select: { id: true, title: true, totalLikes: true, totalDislikes: true },
+          select: {
+            id: true,
+            title: true,
+            totalLikes: true,
+            totalDislikes: true,
+          },
         });
       }
     } else {
-      // User never voted -> add new vote
-      await tx.mediaVote.create({
-        data: { mediaId, userId, type },
-      });
+      await tx.mediaVote.create({ data: { mediaId, userId, type } });
       return tx.media.update({
         where: { id: mediaId },
-        data: type === "LIKE"
-          ? { totalLikes: { increment: 1 } }
-          : { totalDislikes: { increment: 1 } },
+        data:
+          type === "LIKE"
+            ? { totalLikes: { increment: 1 } }
+            : { totalDislikes: { increment: 1 } },
         select: { id: true, title: true, totalLikes: true, totalDislikes: true },
       });
     }
   });
-
-  return result;
 };
 
 const updateMediaInDB = async (
@@ -342,8 +255,7 @@ const updateMediaInDB = async (
   mediaId: string,
   payload: IUpdateMediaPayload,
 ) => {
-  const { genres, platforms, castMembers, directors, tags, ...mediaData } =
-    payload;
+  const { genres, tags, ...mediaData } = payload;
 
   const isMediaExists = await prisma.media.findUnique({
     where: { id: mediaId },
@@ -353,37 +265,20 @@ const updateMediaInDB = async (
     throw new AppError(status.NOT_FOUND, "Media not found");
   }
 
-  // Filter out undefined values to satisfy exactOptionalPropertyTypes
   const filteredMediaData = Object.fromEntries(
-    Object.entries(mediaData).filter(([_, v]) => v !== undefined),
+    Object.entries(mediaData).filter(([_, v]) => v !== undefined && v !== null),
   );
 
   const result = await prisma.$transaction(async (tx) => {
-    // 1. Update basic fields
     const updatedMedia = await tx.media.update({
       where: { id: mediaId },
-      data: {
-        ...filteredMediaData,
-        updatedAt: new Date(),
-      },
+      data: { ...filteredMediaData, updatedAt: new Date() },
     });
 
-    // 2. Update relations if provided
     if (genres) {
       await tx.mediaGenre.deleteMany({ where: { mediaId } });
       await tx.mediaGenre.createMany({
         data: genres.map((genre: any) => ({ mediaId, genre })),
-      });
-    }
-
-    if (platforms) {
-      await tx.mediaPlatform.deleteMany({ where: { mediaId } });
-      await tx.mediaPlatform.createMany({
-        data: platforms.map((p: any) => ({
-          mediaId,
-          platform: p.platform,
-          streamUrl: p.streamUrl,
-        })),
       });
     }
 
@@ -397,12 +292,7 @@ const updateMediaInDB = async (
           create: { name: tagName, slug: tagSlug },
         });
 
-        await tx.mediaTag.create({
-          data: {
-            mediaId,
-            tagId: tag.id,
-          },
-        });
+        await tx.mediaTag.create({ data: { mediaId, tagId: tag.id } });
       }
     }
 
@@ -426,15 +316,10 @@ const deleteMediaFromDB = async (adminId: string, mediaId: string) => {
     where: { id: mediaId },
   });
 
-  if (!isMediaExists) {
-    throw new AppError(status.NOT_FOUND, "Media not found");
-  }
+  if (!isMediaExists) throw new AppError(status.NOT_FOUND, "Media not found");
 
   await prisma.$transaction(async (tx) => {
-    await tx.media.delete({
-      where: { id: mediaId },
-    });
-
+    await tx.media.delete({ where: { id: mediaId } });
     await tx.auditLog.create({
       data: {
         adminId,

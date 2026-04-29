@@ -5,18 +5,17 @@ model Media {
   synopsis         String
   type             MediaType
   releaseYear      Int
-  ageRating        AgeRating @default(PG) // ✅ NEW
-  duration         Int? // minutes — movies only
-  totalSeasons     Int? // series only
-  totalEpisodes    Int? // series only
-  youtubeStreamUrl String? // YouTube embed URL for streaming
+  ageRating        AgeRating @default(PG)
+  duration         Int? // minutes
+  youtubeStreamUrl String?
   language         String    @default("English")
+  country          String?
 
   // Pricing & visibility
   pricingType PricingType   @default(FREE)
   status      ContentStatus @default(DRAFT)
 
-  // Aggregated stats — denormalized for performance
+  // Aggregated stats
   averageRating Float @default(0)
   totalReviews  Int   @default(0)
   totalViews    Int   @default(0)
@@ -33,7 +32,6 @@ model Media {
 
   // Relations
   genres           MediaGenre[]
-  platforms        MediaPlatform[]
   reviews          Review[]
   watchlistEntries Watchlist[]
   tags             MediaTag[]
@@ -60,21 +58,9 @@ model MediaGenre {
   @@map("media_genre")
 }
 
-model MediaPlatform {
-  id        String            @id @default(cuid())
-  mediaId   String
-  platform  StreamingPlatform
-  streamUrl String?
-
-  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-
-  @@unique([mediaId, platform])
-  @@map("media_platform")
-}
-
 model Tag {
   id        String   @id @default(cuid())
-  name      String   @unique // "classic", "underrated", "family-friendly"
+  name      String   @unique
   slug      String   @unique
   createdAt DateTime @default(now())
 

@@ -46,11 +46,19 @@ const createPricingPlanToDB = async (
     );
   }
 
+  const formattedFeatures = payload.features
+    ? payload.features
+        .flatMap((f) => f.split(/[,\n]+/))
+        .map((f) => f.trim())
+        .filter((f) => f.length > 0)
+    : [];
+
   try {
     const result = await prisma.$transaction(async (tx) => {
       const pricePlan = await tx.pricingPlan.create({
         data: {
           ...payload,
+          features: formattedFeatures,
           stripePriceId:
             payload.plan === SubscriptionPlan.MONTHLY
               ? envVars.STRIPE_MONTLY_PRODUCT_ID
@@ -93,6 +101,13 @@ const updatePricingPlanFromDB = async (
 
     if (payload.stripePriceId === "") {
       payload.stripePriceId = null;
+    }
+
+    if (payload.features) {
+      payload.features = payload.features
+        .flatMap((f) => f.split(/[,\n]+/))
+        .map((f) => f.trim())
+        .filter((f) => f.length > 0);
     }
 
     const result = await prisma.pricingPlan.update({

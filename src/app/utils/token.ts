@@ -30,7 +30,7 @@ const setAccessTokenCookie = (res: Response, token: string) => {
   cookieUtils.setCookie(res, "accessToken", token, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? "strict" : "lax",
+    sameSite: isProduction ? "none" : "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 1000,
   });
@@ -40,7 +40,7 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
   cookieUtils.setCookie(res, "refreshToken", token, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? "strict" : "lax",
+    sameSite: isProduction ? "none" : "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7 * 1000,
   });
@@ -51,7 +51,7 @@ const setBetterAuthSessionCookie = (res: Response, token: string) => {
     httpOnly: true,
     secure: isProduction,
     path: "/",
-    sameSite: isProduction ? "strict" : "lax",
+    sameSite: isProduction ? "none" : "lax",
     maxAge: 60 * 60 * 24 * 1000,
   });
 };

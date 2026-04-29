@@ -25,7 +25,7 @@ const createMediaIntoDB = async (
     : slug;
 
   const filteredMediaData = Object.fromEntries(
-    Object.entries(mediaData).filter(([_, v]) => v !== undefined),
+    Object.entries(mediaData).filter(([_, v]) => v !== undefined && v !== null),
   );
 
   const result = await prisma.$transaction(async (tx) => {

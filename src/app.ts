@@ -14,6 +14,8 @@ import { indexRoute } from "./app/routes";
 
 const app: Application = express();
 
+app.set("trust proxy", true);
+
 // --- TEST ROUTE (ABSOLUTE TOP) ---
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello, World! Server is working at the root.");

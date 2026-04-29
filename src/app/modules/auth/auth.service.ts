@@ -605,7 +605,7 @@ const profileUpdate = async (userId: string, payload: IUpdatePayload) => {
 const getSession = async (sessionToken: string) => {
   const session = await auth.api.getSession({
     headers: {
-      Cookie: `better-auth.session_token=${sessionToken}`,
+      Cookie: `${tokenUtils.getSessionCookieName()}=${sessionToken}`,
     },
   });
 

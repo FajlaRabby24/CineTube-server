@@ -85,7 +85,7 @@ const getMyProfile = catchAsync(async (req: Request, res: Response) => {
 
 const getNewToken = catchAsync(async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken;
-  const sessionToken = req.cookies["better-auth.session_token"];
+  const sessionToken = req.cookies[tokenUtils.getSessionCookieName()];
 
   if (!refreshToken) {
     throw new AppError(status.UNAUTHORIZED, "Refresh token is missing");
@@ -154,7 +154,7 @@ const profileUpdate = catchAsync(async (req: Request, res: Response) => {
 
 const changePassword = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
-  const sessionToken = req.cookies["better-auth.session_token"];
+  const sessionToken = req.cookies[tokenUtils.getSessionCookieName()];
   const result = await authService.changePassword(payload, sessionToken);
 
   const { accessToken, refreshToken, token } = result;
@@ -234,7 +234,7 @@ const logoutAllSession = catchAsync(async (req: Request, res: Response) => {
   if (!user) {
     return sendResponse(res, status.UNAUTHORIZED, false, "Unauthorized");
   }
-  const token = req.cookies["better-auth.session_token"];
+  const token = req.cookies[tokenUtils.getSessionCookieName()];
   if (!token) throw new Error("Session token not found");
 
   await authService.logoutAllSession(user.userId, token as string);
@@ -263,15 +263,15 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
 const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
   const redirectPath = decodeURIComponent(req.query?.redirect as string) || "/";
 
-  const sessionToken = req.cookies["better-auth.session_token"];
+  const sessionToken = req.cookies["better-auth.session_token"] || req.cookies["__Secure-better-auth.session_token"];
+  
   if (!sessionToken) {
     return res.redirect(`${envVars.FRONTEND_URL}/login?error=oauth_failed`);
   }
 
+  // Pass the entire headers object to let better-auth handle prefixes and context
   const session = await auth.api.getSession({
-    headers: {
-      Cookie: `better-auth.session_token=${sessionToken}`,
-    },
+    headers: req.headers as any,
   });
 
   if (!session) {

@@ -46,8 +46,13 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
   });
 };
 
+const getSessionCookieName = () => {
+  return isProduction ? "__Secure-better-auth.session_token" : "better-auth.session_token";
+};
+
 const setBetterAuthSessionCookie = (res: Response, token: string) => {
-  cookieUtils.setCookie(res, "better-auth.session_token", token, {
+  const cookieName = getSessionCookieName();
+  cookieUtils.setCookie(res, cookieName, token, {
     httpOnly: true,
     secure: isProduction,
     path: "/",
@@ -62,4 +67,5 @@ export const tokenUtils = {
   setAccessTokenCookie,
   setRefreshTokenCookie,
   setBetterAuthSessionCookie,
+  getSessionCookieName,
 };

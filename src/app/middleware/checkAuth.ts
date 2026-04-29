@@ -6,6 +6,7 @@ import AppError from "../errorhandlers/AppError";
 import { prisma } from "../lib/prisma";
 import { cookieUtils } from "../utils/cookie";
 import { jwtUtils } from "../utils/jwt";
+import { tokenUtils } from "../utils/token";
 
 export const checkAuth =
   (...authRoles: Role[]) =>
@@ -13,7 +14,7 @@ export const checkAuth =
     try {
       const sessionToken = cookieUtils.getCookie(
         req,
-        "better-auth.session_token",
+        tokenUtils.getSessionCookieName(),
       );
       const accessToken = cookieUtils.getCookie(req, "accessToken");
 
@@ -116,7 +117,7 @@ export const checkAuth =
           // ✅ Clear all cookies since session is deleted
           cookieUtils.clearCookie(res, "accessToken", { httpOnly: true });
           cookieUtils.clearCookie(res, "refreshToken", { httpOnly: true });
-          cookieUtils.clearCookie(res, "better-auth.session_token", {
+          cookieUtils.clearCookie(res, tokenUtils.getSessionCookieName(), {
             httpOnly: true,
           });
 

@@ -1,4 +1,4 @@
-import { SubscriptionPlan } from "../../../generated/prisma/enums";
+import { SubscriptionPlan } from "../../../generated/prisma";
 import { prisma } from "../../lib/prisma";
 
 const getUserDashboardStats = async (userId: string) => {

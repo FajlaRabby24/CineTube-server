@@ -4,9 +4,7 @@ import { envVars } from "../config/env";
 import { cookieUtils } from "./cookie";
 import { jwtUtils } from "./jwt";
 
-const isProduction = envVars.BETTER_AUTH_URL?.includes("localhost")
-  ? false
-  : true;
+const isProduction = process.env.NODE_ENV === "production";
 
 const getAccessToken = (payload: JwtPayload) => {
   const accessToken = jwtUtils.createToken(

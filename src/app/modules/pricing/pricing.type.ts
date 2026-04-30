@@ -1,4 +1,4 @@
-import { SubscriptionPlan } from "../../../generated/prisma/enums";
+import { SubscriptionPlan } from "../../../generated/prisma";
 
 export interface IPricingCreatePayload {
   name: string;

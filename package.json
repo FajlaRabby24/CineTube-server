@@ -22,10 +22,9 @@
     "typescript": "^6.0.2"
   },
   "scripts": {
-    "build": "prisma generate && tsup src/app.ts --format esm --platform node --target node20 --outDir api --external pg-native",
+    "build": "prisma generate && tsup",
     "postinstall": "prisma generate",
     "start": "bun dist/server.js",
-    "postbuild": "tsup",
     "dev": "tsx watch src/server.ts",
     "lint": "eslint ./src/**/*",
     "lint:fix": "eslint . --ext .ts --fix",

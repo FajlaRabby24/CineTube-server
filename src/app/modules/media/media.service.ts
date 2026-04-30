@@ -1,6 +1,5 @@
 import status from "http-status";
-import { Media, Prisma } from "../../../generated/prisma/client";
-import { AuditAction, Genre } from "../../../generated/prisma/enums";
+import { Media, Prisma, AuditAction, Genre } from "../../../generated/prisma";
 import AppError from "../../errorhandlers/AppError";
 import { prisma } from "../../lib/prisma";
 import { QueryBuilder } from "../../utils/QueryBuilder";

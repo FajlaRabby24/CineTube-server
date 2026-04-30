@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SubscriptionPlan } from "../../../generated/prisma/enums";
+import { SubscriptionPlan } from "../../../generated/prisma";
 
 const createPricingPlanSchema = z.object({
   name: z.string().min(1).max(100),

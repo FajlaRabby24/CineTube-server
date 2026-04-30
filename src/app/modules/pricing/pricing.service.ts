@@ -2,7 +2,7 @@ import status from "http-status";
 import {
   AuditAction,
   SubscriptionPlan,
-} from "../../../generated/prisma/enums.js";
+} from "../../../generated/prisma";
 import { envVars } from "../../config/env.js";
 import AppError from "../../errorhandlers/AppError.js";
 import { prisma } from "../../lib/prisma.js";

@@ -7,7 +7,7 @@ import {
   ReviewStatus,
   Role,
   SubscriptionPlan,
-} from "../../../generated/prisma/enums";
+} from "../../../generated/prisma";
 import AppError from "../../errorhandlers/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";

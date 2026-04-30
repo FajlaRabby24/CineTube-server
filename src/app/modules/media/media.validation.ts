@@ -5,7 +5,7 @@ import {
   Genre,
   MediaType,
   PricingType,
-} from "../../../generated/prisma/enums";
+} from "../../../generated/prisma";
 
 const createMediaSchema = z.object({
   title: z.string({ error: "Title is required" }),

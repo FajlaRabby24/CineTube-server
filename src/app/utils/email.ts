@@ -36,26 +36,42 @@ export const sendEmail = async ({
   attachments,
   templateName,
 }: ISendEmailOptions) => {
+  if (
+    !envVars.EMAIL_SENDER_SMTP_HOST ||
+    !envVars.EMAIL_SENDER_SMTP_USER ||
+    !envVars.EMAIL_SENDER_SMTP_PASS
+  ) {
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      "SMTP configuration is missing in environment variables.",
+    );
+  }
+
   try {
     const templatePath = path.resolve(
       process.cwd(),
-      `src/app/templates/${templateName}.ejs`,
+      "src/app/templates",
+      `${templateName}.ejs`,
     );
 
     const html = await ejs.renderFile(templatePath, templateData);
 
-    const info = await transporter.sendMail({
-      from: envVars.EMAIL_SENDER_SMTP_FROM,
+    await transporter.sendMail({
+      from: envVars.EMAIL_SENDER_SMTP_FROM || envVars.EMAIL_SENDER_SMTP_USER,
       to,
       subject,
       html,
-      attachments: attachments?.map((attachment) => ({
-        filename: attachment.filename,
-        content: attachment.content,
-        contentType: attachment.contentType,
+      attachments: attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: a.contentType,
       })),
     });
   } catch (error: any) {
-    throw new AppError(status.INTERNAL_SERVER_ERROR, "Failed to send email.");
+    console.error("Email sending error:", error);
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      `Failed to send email: ${error.message}`,
+    );
   }
 };

@@ -136,7 +136,11 @@ const profileUpdate = catchAsync(async (req: Request, res: Response) => {
     return sendResponse(res, status.UNAUTHORIZED, false, "Unauthorized");
   }
 
-  const result = await authService.profileUpdate(user.userId, payload, user.sessionId);
+  const result = await authService.profileUpdate(
+    user.userId,
+    payload,
+    user.sessionId,
+  );
 
   const { accessToken, refreshToken } = result;
 

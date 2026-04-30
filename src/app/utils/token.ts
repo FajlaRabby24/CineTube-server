@@ -4,7 +4,9 @@ import { envVars } from "../config/env";
 import { cookieUtils } from "./cookie";
 import { jwtUtils } from "./jwt";
 
-const isProduction = envVars.BETTER_AUTH_URL?.includes("localhost") ? false : true;
+const isProduction = envVars.BETTER_AUTH_URL?.includes("localhost")
+  ? false
+  : true;
 
 const getAccessToken = (payload: JwtPayload) => {
   const accessToken = jwtUtils.createToken(
@@ -47,7 +49,9 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
 };
 
 const getSessionCookieName = () => {
-  return isProduction ? "__Secure-better-auth.session_token" : "better-auth.session_token";
+  return isProduction
+    ? "__Secure-better-auth.session_token"
+    : "better-auth.session_token";
 };
 
 const setBetterAuthSessionCookie = (res: Response, token: string) => {

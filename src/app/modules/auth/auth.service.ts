@@ -2,6 +2,7 @@ import { Request } from "express";
 import status from "http-status";
 import { JwtPayload } from "jsonwebtoken";
 import { UAParser } from "ua-parser-js";
+import { Role } from "../../../generated/prisma";
 import { deleteFromCloudinary } from "../../config/cloudinary.config";
 import { envVars } from "../../config/env";
 import AppError from "../../errorhandlers/AppError";
@@ -27,12 +28,24 @@ const register = async (payload: IRegisterPayload) => {
         password,
         bio,
         image,
+        role: Role.ADMIN,
       },
     });
 
     if (!data.user) {
       throw new AppError(400, "User not found");
     }
+
+    // if (data.user.emailVerified) {
+    //   await prisma.user.update({
+    //     where: {
+    //       email,
+    //     },
+    //     data: {
+    //       emailVerified: true,
+    //     },
+    //   });
+    // }
 
     return {
       user: {

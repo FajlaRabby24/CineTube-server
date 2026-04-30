@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import status from "http-status";
+import fs from "fs";
 import nodemailer from "nodemailer";
 import path from "path";
 import { envVars } from "../config/env";
@@ -9,7 +10,7 @@ import AppError from "../errorhandlers/AppError";
 
 const transporter = nodemailer.createTransport({
   host: envVars.EMAIL_SENDER_SMTP_HOST,
-  secure: true,
+  secure: Number(envVars.EMAIL_SENDER_SMTP_PORT) === 465, // true for 465, false for other ports
   auth: {
     user: envVars.EMAIL_SENDER_SMTP_USER,
     pass: envVars.EMAIL_SENDER_SMTP_PASS,
@@ -48,13 +49,40 @@ export const sendEmail = async ({
   }
 
   try {
-    const templatePath = path.resolve(
-      process.cwd(),
-      "src/app/templates",
-      `${templateName}.ejs`,
-    );
+    // Detect if we are in production and use the appropriate templates directory
+    const isProduction = process.env.NODE_ENV === "production";
+    const templatesDir = isProduction
+      ? path.join(process.cwd(), "dist", "app", "templates")
+      : path.join(process.cwd(), "src", "app", "templates");
 
-    const html = await ejs.renderFile(templatePath, templateData);
+    const templatePath = path.join(templatesDir, `${templateName}.ejs`);
+
+    if (!fs.existsSync(templatePath)) {
+      console.error(`Email template not found at: ${templatePath}`);
+      // Fallback to src if dist fails (for some deployment types)
+      const fallbackPath = path.join(
+        process.cwd(),
+        "src",
+        "app",
+        "templates",
+        `${templateName}.ejs`,
+      );
+      if (fs.existsSync(fallbackPath)) {
+        console.log(`Using fallback template path: ${fallbackPath}`);
+      } else {
+        throw new AppError(
+          status.INTERNAL_SERVER_ERROR,
+          `Email template not found: ${templateName}`,
+        );
+      }
+    }
+
+    const html = await ejs.renderFile(
+      fs.existsSync(templatePath)
+        ? templatePath
+        : path.join(process.cwd(), "src", "app", "templates", `${templateName}.ejs`),
+      templateData,
+    );
 
     await transporter.sendMail({
       from: envVars.EMAIL_SENDER_SMTP_FROM || envVars.EMAIL_SENDER_SMTP_USER,

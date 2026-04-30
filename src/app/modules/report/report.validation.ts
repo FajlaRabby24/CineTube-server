@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ReportReason, ReportTargetType } from "../../../generated/prisma/client.js";
+import { ReportReason, ReportTargetType } from "../../../generated/prisma";
 
 const createReportSchema = z.object({
   targetType: z.nativeEnum(ReportTargetType),

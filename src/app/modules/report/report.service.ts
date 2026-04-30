@@ -6,11 +6,11 @@ import {
   ReportStatus,
   ReportTargetType,
   ReviewStatus,
-} from "../../../generated/prisma/client";
-import AppError from "../../errorhandlers/AppError.js";
-import { IQueryParams } from "../../interfaces/query.interface.js";
-import { prisma } from "../../lib/prisma.js";
-import { QueryBuilder } from "../../utils/QueryBuilder.js";
+} from "../../../generated/prisma";
+import AppError from "../../errorhandlers/AppError";
+import { IQueryParams } from "../../interfaces/query.interface";
+import { prisma } from "../../lib/prisma";
+import { QueryBuilder } from "../../utils/QueryBuilder";
 import { ICreateReportPaylod } from "./report.types";
 
 const createReportIntoDB = async (

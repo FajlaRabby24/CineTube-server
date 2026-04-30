@@ -4,7 +4,7 @@ import {
   PaymentStatus,
   SubscriptionPlan,
   SubscriptionStatus,
-} from "../../../generated/prisma/client";
+} from "../../../generated/prisma";
 import { envVars } from "../../config/env.js";
 import { stripe } from "../../config/stripe.config";
 import AppError from "../../errorhandlers/AppError.js";
@@ -297,8 +297,7 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
             }
           }
         }
-      } catch (error) {
-      }
+      } catch (error) {}
       break;
     }
 
@@ -467,8 +466,7 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
           });
         });
         break;
-      } catch (error) {
-      }
+      } catch (error) {}
       break;
     }
 
@@ -526,8 +524,7 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
           }).catch(() => {});
         }
         break;
-      } catch (error) {
-      }
+      } catch (error) {}
       break;
     }
 
@@ -545,8 +542,7 @@ const handleWebhookEvent = async (event: Stripe.Event) => {
           },
         });
         break;
-      } catch (error) {
-      }
+      } catch (error) {}
       break;
     }
 

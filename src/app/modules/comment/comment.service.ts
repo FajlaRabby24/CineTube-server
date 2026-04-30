@@ -1,6 +1,5 @@
 import status from "http-status";
-import { NotificationType, Prisma } from "../../../generated/prisma/client";
-import { Role } from "../../../generated/prisma";
+import { NotificationType, Prisma, Role } from "../../../generated/prisma";
 import AppError from "../../errorhandlers/AppError";
 import { IQueryParams } from "../../interfaces/query.interface";
 import { prisma } from "../../lib/prisma";

@@ -5,7 +5,7 @@ import {
   Prisma,
   Review,
   ReviewStatus,
-} from "../../../generated/prisma/client";
+} from "../../../generated/prisma";
 import AppError from "../../errorhandlers/AppError.js";
 import { IQueryParams } from "../../interfaces/query.interface.js";
 import { prisma } from "../../lib/prisma.js";

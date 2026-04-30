@@ -16,6 +16,9 @@ const transporter = nodemailer.createTransport({
     pass: envVars.EMAIL_SENDER_SMTP_PASS,
   },
   port: Number(envVars.EMAIL_SENDER_SMTP_PORT),
+  connectionTimeout: 5000, // 5 seconds
+  greetingTimeout: 5000, // 5 seconds
+  socketTimeout: 5000, // 5 seconds
 });
 
 interface ISendEmailOptions {

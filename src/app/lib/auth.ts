@@ -134,7 +134,7 @@ export const auth = betterAuth({
           }
 
           if (user && !user.emailVerified) {
-            await sendEmail({
+            sendEmail({
               to: email,
               subject: "Verify your email",
               templateName: "otp",
@@ -142,7 +142,9 @@ export const auth = betterAuth({
                 name: user.name,
                 otp,
               },
-            });
+            }).catch((err) =>
+              console.error("Background email verification error:", err),
+            );
           }
         } else if (type === "forget-password") {
           const user = await prisma.user.findUnique({
@@ -156,7 +158,7 @@ export const auth = betterAuth({
           }
 
           if (user) {
-            await sendEmail({
+            sendEmail({
               to: email,
               subject: "Password Reset OTP",
               templateName: "otp",
@@ -164,7 +166,9 @@ export const auth = betterAuth({
                 name: user.name,
                 otp,
               },
-            });
+            }).catch((err) =>
+              console.error("Background password reset email error:", err),
+            );
           }
         }
       },

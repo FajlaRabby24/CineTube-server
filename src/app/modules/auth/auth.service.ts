@@ -583,6 +583,9 @@ const googleLoginSuccess = async (session: Record<string, any>) => {
     userId: session?.user?.id,
     role: session?.user?.role,
     name: session?.user?.name,
+    email: session?.user?.email,
+    image: session?.user?.image,
+    sessionId: session?.session?.id,
   };
 
   const accessToken = tokenUtils.getAccessToken(tokenInfo);
@@ -591,6 +594,7 @@ const googleLoginSuccess = async (session: Record<string, any>) => {
   return {
     accessToken,
     refreshToken,
+    sessionToken: session?.session?.token,
   };
 };
 

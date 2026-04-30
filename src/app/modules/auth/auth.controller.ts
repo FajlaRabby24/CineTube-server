@@ -289,16 +289,24 @@ const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
   }
 
   const result = await authService.googleLoginSuccess(session);
-  const { accessToken, refreshToken } = result;
+  const { accessToken, refreshToken, sessionToken: sessionTokenVal } = result;
 
   tokenUtils.setAccessTokenCookie(res, accessToken);
   tokenUtils.setRefreshTokenCookie(res, refreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, sessionTokenVal);
 
   const isValidRedirectPath =
     redirectPath.startsWith("/") && !redirectPath.startsWith("//");
   const finalRedirectPath = isValidRedirectPath ? redirectPath : "/";
 
-  res.redirect(`${envVars.FRONTEND_URL}${finalRedirectPath}`);
+  // Redirect to frontend callback page with tokens for cross-domain session sync
+  const callbackUrl = new URL(`${envVars.FRONTEND_URL}/google-callback`);
+  callbackUrl.searchParams.set("accessToken", accessToken);
+  callbackUrl.searchParams.set("refreshToken", refreshToken);
+  callbackUrl.searchParams.set("sessionToken", sessionTokenVal);
+  callbackUrl.searchParams.set("redirectPath", finalRedirectPath);
+
+  res.redirect(callbackUrl.toString());
 });
 
 // handle oauth error

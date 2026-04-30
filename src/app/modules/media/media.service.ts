@@ -56,6 +56,13 @@ const createMediaIntoDB = async (
       }
     }
 
+    // Ensure admin record exists to prevent audit log failure
+    await tx.admin.upsert({
+      where: { userId: adminId },
+      update: {},
+      create: { userId: adminId },
+    });
+
     await tx.auditLog.create({
       data: {
         adminId,
@@ -296,6 +303,13 @@ const updateMediaInDB = async (
       }
     }
 
+    // Ensure admin record exists to prevent audit log failure
+    await tx.admin.upsert({
+      where: { userId: adminId },
+      update: {},
+      create: { userId: adminId },
+    });
+
     await tx.auditLog.create({
       data: {
         adminId,
@@ -320,6 +334,13 @@ const deleteMediaFromDB = async (adminId: string, mediaId: string) => {
 
   await prisma.$transaction(async (tx) => {
     await tx.media.delete({ where: { id: mediaId } });
+    // Ensure admin record exists to prevent audit log failure
+    await tx.admin.upsert({
+      where: { userId: adminId },
+      update: {},
+      create: { userId: adminId },
+    });
+
     await tx.auditLog.create({
       data: {
         adminId,

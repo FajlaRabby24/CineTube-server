@@ -22,7 +22,11 @@ const handleWebhook = catchAsync(async (req: Request, res: Response) => {
   let event;
   try {
     // এখানে req.body অবশ্যই BUFFER হতে হবে (Raw Body)
-    event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+    event = await stripe.webhooks.constructEventAsync(
+      req.body,
+      signature,
+      webhookSecret,
+    );
   } catch (err: any) {
     return sendResponse(
       res,

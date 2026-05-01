@@ -147,13 +147,11 @@ const profileUpdate = catchAsync(async (req: Request, res: Response) => {
   tokenUtils.setAccessTokenCookie(res, accessToken);
   tokenUtils.setRefreshTokenCookie(res, refreshToken);
 
-  sendResponse(
-    res,
-    status.OK,
-    true,
-    "Profile updated successfully",
-    result.user,
-  );
+  sendResponse(res, status.OK, true, "Profile updated successfully", {
+    user: result.user,
+    accessToken,
+    refreshToken,
+  });
 });
 
 const changePassword = catchAsync(async (req: Request, res: Response) => {

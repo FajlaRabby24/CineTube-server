@@ -24,6 +24,20 @@ const createContactMessage = catchAsync(async (req: Request, res: Response) => {
   );
 });
 
+const getContactMessages = catchAsync(async (req: Request, res: Response) => {
+  const result = await ContactService.getContactMessagesFromDB(req.query);
+
+  sendResponse(
+    res,
+    status.OK,
+    true,
+    "Contact messages retrieved successfully!",
+    result.data,
+    result.meta,
+  );
+});
+
 export const ContactController = {
   createContactMessage,
+  getContactMessages,
 };

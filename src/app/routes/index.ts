@@ -13,6 +13,7 @@ import { ReviewRoutes } from "../modules/review/review.route";
 import { SubscriptionRoutes } from "../modules/subscription/subscription.route";
 import { TagRoutes } from "../modules/tag/tag.route";
 import { WatchlistRoutes } from "../modules/watchlist/watchlist.route";
+import { ContactRoutes } from "../modules/contact/contact.route";
 import { sendResponse } from "../utils/sendResponse";
 
 const router = Router();
@@ -30,6 +31,7 @@ router.use("/payments", PaymentRoutes);
 router.use("/pricing", PricingRoutes);
 router.use("/subscriptions", SubscriptionRoutes);
 router.use("/dashboard", DashboardRoutes);
+router.use("/contact", ContactRoutes);
 
 router.post("/validate-file", async (req, res) => {
   const { name, size, type } = req.body;

@@ -50,7 +50,7 @@ bun --version
 
    ```bash
    git clone https://github.com/FajlaRabby24/CineTube-server.git
-   cd CuneTube-server
+   cd CineTube-server
    ```
 
 2. **Install Server Dependencies**:
